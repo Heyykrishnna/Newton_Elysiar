@@ -98,20 +98,20 @@ const App = () => {
                 <Route path="/" element={<Landing />} />
                 <Route path="/dashboard" element={<Index />} />
                 <Route path="/coming" element = {<ComingSoon />} />
-                <Route path="/tests" element={<ProtectedRoute><Tests /></ProtectedRoute>} />
+                {/* <Route path="/tests" element={<ProtectedRoute><Tests /></ProtectedRoute>} /> */}
                 <Route path="/study-resources" element={<ProtectedRoute><StudyResources /></ProtectedRoute>} />
                 <Route path="/request-resource" element={<ProtectedRoute><RequestResource /></ProtectedRoute>} />
-                <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
-                <Route path="/create-test" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
+                {/* <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} /> */}
+                {/* <Route path="/create-test" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
                 <Route path="/edit-test/:testId" element={<ProtectedRoute><EditTest /></ProtectedRoute>} />
                 <Route path="/take-test/:testId" element={<ProtectedRoute><TakeTest /></ProtectedRoute>} />
                 <Route path="/test-results/:testId" element={<ProtectedRoute><TestResults /></ProtectedRoute>} />
                 <Route path="/test-analysis/:attemptId" element={<ProtectedRoute><TestAnalysis /></ProtectedRoute>} />
                 <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
-                <Route path="/attendance-management" element={<ProtectedRoute><AttendanceManagement /></ProtectedRoute>} />
+                <Route path="/attendance-management" element={<ProtectedRoute><AttendanceManagement /></ProtectedRoute>} /> */}
                 <Route path="/student-portal" element={<ProtectedRoute><StudentPortal /></ProtectedRoute>} />
-                <Route path="/test-data" element={<ProtectedRoute><TestData /></ProtectedRoute>} />
-                <Route path="/complaints" element={<ProtectedRoute><Complaints /></ProtectedRoute>} />
+                {/* <Route path="/test-data" element={<ProtectedRoute><TestData /></ProtectedRoute>} /> */}
+                {/* <Route path="/complaints" element={<ProtectedRoute><Complaints /></ProtectedRoute>} /> */}
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/support" element={<Support />} />
@@ -123,8 +123,8 @@ const App = () => {
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
                 <Route path="/ai-learning" element={<ProtectedRoute><AILearning /></ProtectedRoute>} />
-                <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
-                <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} />
+                {/* <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
+                <Route path="/my-library" element={<ProtectedRoute><MyLibrary /></ProtectedRoute>} /> */}
                 <Route path="/coding-practice" element={<ProtectedRoute><CodingPractice /></ProtectedRoute>} />
                 <Route path="/contest-management" element={<ProtectedRoute><ContestManagement /></ProtectedRoute>} />
                 <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />

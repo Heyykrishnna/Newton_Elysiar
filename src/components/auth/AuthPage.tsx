@@ -52,18 +52,18 @@ const AuthPage = () => {
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
     
-    // const allowedDomains = ['nst.rishihood.edu.in', 'rishihood.edu.in', 'newtonschool.in'];
-    // const domain = email.split('@').pop()?.toLowerCase();
+    const allowedDomains = ['nst.rishihood.edu.in', 'rishihood.edu.in', 'newtonschool.in'];
+    const domain = email.split('@').pop()?.toLowerCase();
     
-    // if (!domain || !allowedDomains.includes(domain)) {
-    //   toast({
-    //     title: "Access Denied",
-    //     description: "Signups are restricted to official NST, Rishihood or Newton School email addresses.",
-    //     variant: "destructive"
-    //   });
-    //   setIsLoading(false);
-    //   return;
-    // }
+    if (!domain || !allowedDomains.includes(domain)) {
+      toast({
+        title: "Access Denied",
+        description: "Signups are restricted to official NST, Rishihood or Newton School email addresses.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
 
     const { error, needsEmailVerification } = await signUp(email, password, fullName);
     
@@ -226,12 +226,11 @@ const AuthPage = () => {
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: `url('https://i.pinimg.com/1200x/66/91/06/6691060e3a5f39ab3247b640c1ccd9a8.jpg')`,
+                backgroundImage: `url('https://framerusercontent.com/images/EhpbFPhmT6FGFDOknfMwtoP0Y.png?width=1200&height=736')`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 filter: "blur(4px)"
               }}
-              // https://framerusercontent.com/images/EhpbFPhmT6FGFDOknfMwtoP0Y.png?width=1200&height=736
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
             <div className="absolute bottom-8 left-8 space-y-4">
@@ -250,7 +249,7 @@ const AuthPage = () => {
           {/* Benefits list */}
           <div className="space-y-4">
             {[
-              'Sign up with your Google Account',
+              'Use your official Newton School or Rishihood email to sign up.',
               'Create your personalized campus account',
               'Access tests, attendance, and AI learning tools instantly',
               'Empower your learning with an intelligent dashboard'
@@ -356,7 +355,7 @@ const AuthPage = () => {
                     </Button>
                     
                     {/* Social Auth Buttons */}
-                    <div className="grid grid-cols-1 gap-3 animate-slide-up text-black" style={{ animationDelay: "0.6s" }}>
+                    {/* <div className="grid grid-cols-1 gap-3 animate-slide-up text-black" style={{ animationDelay: "0.6s" }}>
                       <Button 
                         type="button"
                         variant="outline" 
@@ -373,7 +372,7 @@ const AuthPage = () => {
                         </svg>
                         Google
                       </Button>
-                    </div>
+                    </div> */}
                   </form>
                 </TabsContent>
                 
@@ -465,7 +464,7 @@ const AuthPage = () => {
                       )}
                     </Button>
 
-                    <div className="grid grid-cols-1 gap-3 animate-slide-up text-black" style={{ animationDelay: "0.6s" }}>
+                    {/* <div className="grid grid-cols-1 gap-3 animate-slide-up text-black" style={{ animationDelay: "0.6s" }}>
                       <Button 
                         type="button"
                         variant="outline" 
@@ -482,7 +481,7 @@ const AuthPage = () => {
                         </svg>
                         Google
                       </Button>
-                    </div>
+                    </div> */}
                   </form>
                 </TabsContent>
               </Tabs>
@@ -497,9 +496,9 @@ const AuthPage = () => {
                   Privacy Policy
                 </Link>
               </div>
-              {/* <div className="text-center text-xs text-zinc-400 italic">
+              <div className="text-center text-xs text-zinc-400 italic">
                 Sign up using your official NST or Rishihood account to gain access.
-              </div> */}
+              </div>
             </CardContent>
           </Card>
         </div>

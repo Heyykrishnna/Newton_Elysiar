@@ -373,7 +373,8 @@ const Landing = () => {
           <div ref={heroSubRef} className="max-w-2xl mx-auto mb-12">
             <p className="text-lg md:text-xl text-white leading-relaxed">
               Experience the future of education with AI-powered learning, 
-              real-time collaboration, and a community that grows with you.
+              real-time collaboration, and a community that grows with you. <br/>
+              <span className='italic text-sm'> - For Newton School of Technology, Rishihood University </span>
             </p>
           </div>
 

@@ -66,8 +66,8 @@ export function BeautifulFooter({
   ]
 
   const quickLinks = [
-    { name: "Attendance", path: "/attendance" },
-    { name: "Tests", path: "/tests" },
+    // { name: "Attendance", path: "/attendance" },
+    // { name: "Tests", path: "/tests" },
     { name: "Study Resources", path: "/study-resources" },
     { name: "Calendar and Events", path: "/modern-calendar" },
     { name: "World News", path: "/world-news" },

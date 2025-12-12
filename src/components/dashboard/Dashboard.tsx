@@ -121,6 +121,8 @@ const Dashboard = () => {
         {/* Hero Section */}
         <section className="relative min-h-screen flex items-center justify-center pt-12">
 
+          
+
           <div className="relative z-10 text-center px-6 max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -747,7 +749,7 @@ const Dashboard = () => {
                       </Link>
                     </motion.div>
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 1.0, ease: [0.23, 1, 0.32, 1] }}
@@ -784,7 +786,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
 
                     <motion.div
                       initial={{ opacity: 0, y: 40 }}
@@ -825,7 +827,7 @@ const Dashboard = () => {
                       </Link>
                     </motion.div>
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 0.8, ease: [0.23, 1, 0.32, 1] }}
@@ -862,9 +864,9 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 1.0, ease: [0.23, 1, 0.32, 1] }}
@@ -901,7 +903,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
 
                     <motion.div
                       initial={{ opacity: 0, y: 40 }}
@@ -981,7 +983,7 @@ const Dashboard = () => {
                     </Link>
                   </motion.div> */}
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 1.0, ease: [0.23, 1, 0.32, 1] }}
@@ -1018,9 +1020,9 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 1.0, ease: [0.23, 1, 0.32, 1] }}
@@ -1057,7 +1059,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
 
                   </>
                 )}

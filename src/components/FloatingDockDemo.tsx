@@ -26,13 +26,13 @@ export default function FloatingDockDemo() {
       ),
       href: "/",
     },
-    {
-      title: "Tests",
-      icon: (
-        <FileText className="h-full w-full text-white dark:text-white" />
-      ),
-      href: "/tests",
-    },
+    // {
+    //   title: "Tests",
+    //   icon: (
+    //     <FileText className="h-full w-full text-white dark:text-white" />
+    //   ),
+    //   href: "/tests",
+    // },
     {
       title: "Resources",
       icon: (
@@ -54,13 +54,13 @@ export default function FloatingDockDemo() {
       ),
       href: "/coding-practice",
     },
-    {
-      title: "Results",
-      icon: (
-        <Award className="h-full w-full text-white dark:text-white" />
-      ),
-      href: "/results",
-    },
+    // {
+    //   title: "Results",
+    //   icon: (
+    //     <Award className="h-full w-full text-white dark:text-white" />
+    //   ),
+    //   href: "/results",
+    // },
     {
       title: "Calendar",
       icon: (
@@ -68,13 +68,13 @@ export default function FloatingDockDemo() {
       ),
       href: "/modern-calendar",
     },
-    {
-      title: "Attendance",
-      icon: (
-        <SquarePen className="h-full w-full text-white dark:text-white" />
-      ),
-      href: "/attendance",
-    },
+    // {
+    //   title: "Attendance",
+    //   icon: (
+    //     <SquarePen className="h-full w-full text-white dark:text-white" />
+    //   ),
+    //   href: "/attendance",
+    // },
     {
       title: "Support",
       icon: (

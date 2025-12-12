@@ -390,8 +390,18 @@ const Landing = () => {
         </div>
       </section>
 
+      <div className="text-center mb-10 mt-20">
+        <h2 className="text-4xl font-bold text-blue-900">
+        Tailored specifically for <span className= 'italic font-medium'> The Newton School of Technology </span>
+        </h2>
+        <p className="text-gray-600 mt-2 text-sm">
+          Elysiar has tailored its platform to align precisely with the requirements of the Newton School of Technology.
+        </p>
+      </div>
+
       {/* Stats Section */}
       <StatsSection />
+
 
       {/* Sticky Features Section */}
       <section id="features" className="py-20 relative bg-[#fafafa]">

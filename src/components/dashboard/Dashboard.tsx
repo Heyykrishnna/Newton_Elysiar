@@ -313,7 +313,7 @@ const Dashboard = () => {
                       </Link>
                     </motion.div>
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 0.8, ease: [0.23, 1, 0.32, 1] }}
@@ -321,16 +321,14 @@ const Dashboard = () => {
                       <Link to="/create-test" className="block group">
                         <div className="relative h-[280px] rounded-2xl bg-white/80 backdrop-blur-xl border border-black/5 overflow-hidden transition-all duration-700 hover:bg-white/90 hover:border-black/10 hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1">
                           {/* Subtle gradient background */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-green-50/30" />
+                          {/* <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 to-green-50/30" />
 
-                          {/* Floating icon */}
                           <div className="absolute top-8 right-8">
                             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:bg-emerald-500/15">
                               <Plus className="w-7 h-7 text-emerald-600" />
                             </div>
                           </div>
 
-                          {/* Content */}
                           <div className="relative p-8 h-full flex flex-col justify-between">
                             <div>
                               <div className="inline-block px-3 py-1 text-xs font-medium text-emerald-700 bg-emerald-100/60 rounded-full mb-4">
@@ -352,10 +350,10 @@ const Dashboard = () => {
                             </div>
                           </div>
                         </div>
-                      </Link>
-                    </motion.div>
+                      </Link> 
+                    </motion.div> */}
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 1.0, ease: [0.23, 1, 0.32, 1] }}
@@ -392,7 +390,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
 
                     <motion.div
                       initial={{ opacity: 0, y: 40 }}
@@ -472,7 +470,7 @@ const Dashboard = () => {
                     </Link>
                   </motion.div> */}
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 1.4, ease: [0.23, 1, 0.32, 1] }}
@@ -509,7 +507,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
 
                     <motion.div
                       initial={{ opacity: 0, y: 40 }}
@@ -550,7 +548,7 @@ const Dashboard = () => {
                       </Link>
                     </motion.div>
 
-                    <motion.div
+                    {/* <motion.div
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.8, delay: 1.6, ease: [0.23, 1, 0.32, 1] }}
@@ -587,7 +585,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </Link>
-                    </motion.div>
+                    </motion.div> */}
                   </>
                 ) : (
                   // Student cards would go here with similar minimalist design

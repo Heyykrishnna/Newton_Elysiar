@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Calendar, Clock, MapPin, Users, BookOpen, TrendingUp, Award, ChevronRight, Plus, Minus, BarChart3 } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, BookOpen, TrendingUp, Award, ChevronRight, Plus, Minus, BarChart3, LineChart as LineChartIcon } from "lucide-react";
 import { useStudentClasses } from "@/hooks/useClassSchedules";
 import { useAttendanceAnalytics, useStudentEnrollments } from "@/hooks/useAttendanceAnalytics";
 import { Layout } from "@/components/Layout";
@@ -15,6 +15,11 @@ import { getEventDuration, getEventInstructor, getEventLocation } from "@/utils/
 import { CalendarEvent } from "@/types/calendar";
 import Loader from "@/components/loader";
 import StudentLoader from "@/components/studentportalload";
+import { useStudentProgressAnalytics } from "@/hooks/useStudentProgressAnalytics";
+import { ProgressOverviewCards } from "@/components/ProgressOverviewCards";
+import { TopicDistributionChart } from "@/components/TopicDistributionChart";
+import { ProgressTimeline } from "@/components/ProgressTimeline";
+import { CategoryComparisonChart } from "@/components/CategoryComparisonChart";
 
 export default function StudentPortal() {
   const [showLoader, setShowLoader] = useState(true);
@@ -38,7 +43,8 @@ export default function StudentPortal() {
   } = useStudentClasses();
   const { analytics, isLoading: analyticsLoading } = useAttendanceAnalytics();
   const { enrollments } = useStudentEnrollments();
-  const [activeTab, setActiveTab] = useState<"upcoming" | "enrolled" | "available" | "analytics">("upcoming");
+  const [activeTab, setActiveTab] = useState<"upcoming" | "enrolled" | "available" | "analytics" | "progress">("upcoming");
+  const { data: progressAnalytics, isLoading: progressLoading } = useStudentProgressAnalytics();
 
   // Chart colors
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -189,8 +195,8 @@ export default function StudentPortal() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-1 bg-muted p-1 rounded-lg mb-8">
-          <Button
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-1 bg-muted p-1 rounded-lg mb-8">
+          {/* <Button
             variant={activeTab === "upcoming" ? "default" : "ghost"}
             className="flex-1"
             onClick={() => setActiveTab("upcoming")}
@@ -221,6 +227,14 @@ export default function StudentPortal() {
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             Analytics
+          </Button> */}
+          <Button
+            variant={activeTab === "progress" ? "default" : "ghost"}
+            className="flex-1"
+            onClick={() => setActiveTab("progress")}
+          >
+            <LineChartIcon className="w-4 h-4 mr-2" />
+            Progress
           </Button>
         </div>
 
@@ -460,6 +474,76 @@ export default function StudentPortal() {
               )}
             </CardContent>
           </Card>
+        )}
+
+        {activeTab === "progress" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">My Coding Progress</h2>
+              <p className="text-muted-foreground">Track your progress across different topics and difficulty levels</p>
+            </div>
+
+            {!progressLoading && progressAnalytics ? (
+              <>
+                {/* Overview Cards */}
+                <ProgressOverviewCards
+                  totalSolved={progressAnalytics.totalSolved}
+                  averageScore={progressAnalytics.averageScore}
+                  strongestCategory={progressAnalytics.strongestCategory}
+                  weakestCategory={progressAnalytics.weakestCategory}
+                  difficultyBreakdown={progressAnalytics.difficultyBreakdown}
+                />
+
+                {/* Charts Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <TopicDistributionChart data={progressAnalytics.topicDistribution} />
+                  <CategoryComparisonChart data={progressAnalytics.topicDistribution} />
+                </div>
+
+                {/* Timeline */}
+                <ProgressTimeline data={progressAnalytics.timeline} />
+
+                {/* Recent Activity */}
+                {progressAnalytics.recentActivity.length > 0 && (
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader>
+                      <CardTitle>Recent Activity</CardTitle>
+                      <CardDescription>Your latest submissions</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {progressAnalytics.recentActivity.map((activity, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
+                            <div>
+                              <p className="font-medium">{activity.title}</p>
+                              <p className="text-sm text-muted-foreground">{activity.category}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-purple-600">{activity.score.toFixed(0)}%</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(activity.submittedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : progressLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Loading your progress...</p>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <LineChartIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">No progress data yet</p>
+                <p className="text-sm">Start solving questions in the Coding Practice Hub to see your progress</p>
+              </div>
+            )}
+          </div>
         )}
 
         {activeTab === "analytics" && (

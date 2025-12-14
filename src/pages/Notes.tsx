@@ -14,7 +14,7 @@ import {
   Clock, FileText, Bold, Italic, Underline, List, ListOrdered,
   Heading1, Heading2, Quote, Code, Link, Image, CheckSquare,
   MoreVertical, Copy, Download, Palette, Archive, Pin, PinOff,
-  Upload, Share2, Users, Globe, Lock, Keyboard
+  Upload, Share2, Users, Globe, Lock, Keyboard, FileDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -36,6 +36,8 @@ import { useSharedNotes, useCreateSharedNote, useUpdateSharedNote, useDeleteShar
 import { supabase } from '@/integrations/supabase/client';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 
 interface Note {
@@ -357,6 +359,185 @@ export default function Notes() {
     toast.success('Note exported as Markdown');
   };
 
+  const exportNotePDF = async (note: Note | SharedNote) => {
+    try {
+      const title = note.title;
+      const content = note.content;
+      const tags = note.tags || [];
+      const createdAt = 'createdAt' in note ? note.createdAt : note.created_at;
+      
+      // Create a temporary container for rendering
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.width = '800px';
+      container.style.padding = '40px';
+      container.style.backgroundColor = '#ffffff';
+      container.style.fontFamily = 'Arial, sans-serif';
+      
+      // Add Elysiar logo
+      const logoImg = document.createElement('img');
+      logoImg.src = '/logo-Elysiar-circle.png';
+      logoImg.style.width = '80px';
+      logoImg.style.height = '80px';
+      logoImg.style.marginBottom = '20px';
+      logoImg.style.display = 'block';
+      
+      // Add title
+      const titleEl = document.createElement('h1');
+      titleEl.textContent = title;
+      titleEl.style.fontSize = '28px';
+      titleEl.style.fontWeight = 'bold';
+      titleEl.style.marginBottom = '10px';
+      titleEl.style.color = '#1a1a1a';
+      
+      // Add metadata
+      const metaEl = document.createElement('div');
+      metaEl.style.fontSize = '12px';
+      metaEl.style.color = '#666';
+      metaEl.style.marginBottom = '20px';
+      metaEl.style.borderBottom = '2px solid #ac1ed6';
+      metaEl.style.paddingBottom = '10px';
+      metaEl.innerHTML = `
+        <div style="margin-bottom: 5px;"><strong>Created:</strong> ${format(new Date(createdAt), 'PPpp')}</div>
+        ${tags.length > 0 ? `<div><strong>Tags:</strong> ${tags.join(', ')}</div>` : ''}
+      `;
+      
+      // Add content
+      const contentEl = document.createElement('div');
+      contentEl.innerHTML = content;
+      contentEl.style.fontSize = '14px';
+      contentEl.style.lineHeight = '1.6';
+      contentEl.style.color = '#333';
+      
+      // Style content elements
+      contentEl.querySelectorAll('h1').forEach(el => {
+        (el as HTMLElement).style.fontSize = '24px';
+        (el as HTMLElement).style.fontWeight = 'bold';
+        (el as HTMLElement).style.marginTop = '20px';
+        (el as HTMLElement).style.marginBottom = '10px';
+        (el as HTMLElement).style.color = '#1a1a1a';
+      });
+      contentEl.querySelectorAll('h2').forEach(el => {
+        (el as HTMLElement).style.fontSize = '20px';
+        (el as HTMLElement).style.fontWeight = 'bold';
+        (el as HTMLElement).style.marginTop = '16px';
+        (el as HTMLElement).style.marginBottom = '8px';
+        (el as HTMLElement).style.color = '#1a1a1a';
+      });
+      contentEl.querySelectorAll('h3').forEach(el => {
+        (el as HTMLElement).style.fontSize = '16px';
+        (el as HTMLElement).style.fontWeight = 'bold';
+        (el as HTMLElement).style.marginTop = '12px';
+        (el as HTMLElement).style.marginBottom = '6px';
+        (el as HTMLElement).style.color = '#1a1a1a';
+      });
+      contentEl.querySelectorAll('p').forEach(el => {
+        (el as HTMLElement).style.marginBottom = '10px';
+      });
+      contentEl.querySelectorAll('code').forEach(el => {
+        (el as HTMLElement).style.backgroundColor = '#f5f5f5';
+        (el as HTMLElement).style.padding = '2px 6px';
+        (el as HTMLElement).style.borderRadius = '3px';
+        (el as HTMLElement).style.fontFamily = 'monospace';
+        (el as HTMLElement).style.fontSize = '13px';
+      });
+      contentEl.querySelectorAll('pre').forEach(el => {
+        (el as HTMLElement).style.backgroundColor = '#f5f5f5';
+        (el as HTMLElement).style.padding = '12px';
+        (el as HTMLElement).style.borderRadius = '6px';
+        (el as HTMLElement).style.overflow = 'auto';
+        (el as HTMLElement).style.fontFamily = 'monospace';
+        (el as HTMLElement).style.fontSize = '13px';
+      });
+      contentEl.querySelectorAll('blockquote').forEach(el => {
+        (el as HTMLElement).style.borderLeft = '4px solid #ac1ed6';
+        (el as HTMLElement).style.paddingLeft = '16px';
+        (el as HTMLElement).style.marginLeft = '0';
+        (el as HTMLElement).style.color = '#666';
+        (el as HTMLElement).style.fontStyle = 'italic';
+      });
+      contentEl.querySelectorAll('ul, ol').forEach(el => {
+        (el as HTMLElement).style.marginLeft = '20px';
+        (el as HTMLElement).style.marginBottom = '10px';
+      });
+      contentEl.querySelectorAll('li').forEach(el => {
+        (el as HTMLElement).style.marginBottom = '5px';
+      });
+      
+      // Add footer
+      const footerEl = document.createElement('div');
+      footerEl.style.marginTop = '40px';
+      footerEl.style.paddingTop = '20px';
+      footerEl.style.borderTop = '1px solid #e0e0e0';
+      footerEl.style.fontSize = '10px';
+      footerEl.style.color = '#999';
+      footerEl.style.textAlign = 'center';
+      footerEl.textContent = 'Generated by Elysiar Notes • ' + new Date().toLocaleDateString();
+      
+      // Append all elements
+      container.appendChild(logoImg);
+      container.appendChild(titleEl);
+      container.appendChild(metaEl);
+      container.appendChild(contentEl);
+      container.appendChild(footerEl);
+      document.body.appendChild(container);
+      
+      // Wait for logo to load
+      await new Promise((resolve) => {
+        if (logoImg.complete) {
+          resolve(null);
+        } else {
+          logoImg.onload = () => resolve(null);
+          logoImg.onerror = () => resolve(null);
+        }
+      });
+      
+      // Convert to canvas
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Remove temporary container
+      document.body.removeChild(container);
+      
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= 297; // A4 height in mm
+      
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297;
+      }
+      
+      // Save PDF
+      pdf.save(`${title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
+      toast.success('Note exported as PDF');
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast.error('Failed to export PDF');
+    }
+  };
+
   const importMarkdown = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -528,6 +709,10 @@ export default function Notes() {
                         <Download className="w-4 h-4 mr-2" />
                         Export MD
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); exportNotePDF(note); }}>
+                        <FileDown className="w-4 h-4 mr-2" />
+                        Share PDF
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); updateNote(note.id, { isArchived: !note.isArchived }); }}>
                         <Archive className="w-4 h-4 mr-2" />
                         {note.isArchived ? 'Unarchive' : 'Archive'}
@@ -612,6 +797,10 @@ export default function Notes() {
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); exportNoteMarkdown(note); }}>
                         <Download className="w-4 h-4 mr-2" />
                         Export MD
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); exportNotePDF(note); }}>
+                        <FileDown className="w-4 h-4 mr-2" />
+                        Share PDF
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={(e) => { 
                         e.stopPropagation(); 

@@ -133,26 +133,75 @@ export function WebDevContestPlayground({ question, isOpen, onClose, onComplete 
   // Update preview
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setSrcDoc(`
-        <html>
-          <head>
-            <style>${css}</style>
-          </head>
-          <body>
-            ${html}
-            <script>${js}</script>
-          </body>
-        </html>
-      `);
+      if (question.category === 'React') {
+         setSrcDoc(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script>
+                    window.process = { env: { NODE_ENV: 'development' } };
+                </script>
+                <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+                <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+                <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+                <style>${css}</style>
+            </head>
+            <body>
+                ${html}
+                <div id="error-container" style="display:none; color: red; background: #ffe6e6; padding: 1rem; border: 1px solid red; margin: 1rem; border-radius: 8px; font-family: monospace;"></div>
+                <script type="text/babel" data-presets="env,react">
+                  try {
+                    ${js}
+                  } catch (err) {
+                    const errDiv = document.getElementById('error-container');
+                    if(errDiv) { errDiv.style.display = 'block'; errDiv.innerText = 'Runtime Error: ' + err.message; }
+                    console.error(err);
+                  }
+                </script>
+                <script>
+                    // Capture console errors too
+                     window.onerror = function(msg, url, line, col, error) {
+                         const errDiv = document.getElementById('error-container');
+                         if (errDiv) {
+                            errDiv.style.display = 'block';
+                            errDiv.innerText = 'Error: ' + msg;
+                         }
+                    };
+                    // Suppress Babel warning
+                    const originalWarn = console.warn;
+                    console.warn = function(...args) {
+                        if (args[0] && typeof args[0] === 'string' && args[0].includes('You are using the in-browser Babel transformer')) return;
+                        originalWarn.apply(console, args);
+                    };
+                </script>
+            </body>
+            </html>
+         `);
+      } else {
+          setSrcDoc(`
+            <html>
+              <head>
+                <style>${css}</style>
+              </head>
+              <body>
+                ${html}
+                <script>${js}</script>
+              </body>
+            </html>
+          `);
+      }
     }, 500);
     return () => clearTimeout(timeout);
-  }, [html, css, js]);
+  }, [html, css, js, question.category]);
 
   // Reset when question changes
   useEffect(() => {
     setHtml(question.starterHtml);
     setCss(question.starterCss);
     setJs(question.starterJs);
+    setActiveTab(question.category === 'React' ? 'js' : 'html');
     setElapsedTime(0);
     setIsRunning(true);
     setShowHints(false);
@@ -443,7 +492,7 @@ export function WebDevContestPlayground({ question, isOpen, onClose, onComplete 
                         : 'text-white/50 hover:text-white/80'
                     }`}
                   >
-                    {tab.toUpperCase()}
+                    {tab === 'js' && question.category === 'React' ? 'JSX' : tab.toUpperCase()}
                   </button>
                 ))}
               </div>

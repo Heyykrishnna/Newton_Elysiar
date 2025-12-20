@@ -104,14 +104,127 @@ document.getElementById('clickMe')?.addEventListener('click', () => {
   }
 };
 
+const DEFAULT_REACT_FILES: Record<string, File> = {
+  'index.html': {
+    name: 'index.html',
+    language: 'html',
+    content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Playground</title>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>`
+  },
+  'App.jsx': {
+    name: 'App.jsx',
+    language: 'javascript',
+    content: `const { useState, useEffect } = React;
+const { createRoot } = ReactDOM;
+const { Card, CardHeader, CardTitle, CardContent } = window; // Example if we mocked UI components, but let's stick to standard HTML
+
+function App() {
+    const [count, setCount] = useState(0);
+
+    return (
+        <div style={{ 
+            fontFamily: 'system-ui, sans-serif', 
+            maxWidth: '600px', 
+            margin: '2rem auto', 
+            padding: '2rem',
+            background: 'linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)',
+            borderRadius: '16px',
+            color: 'white',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+        }}>
+            <header style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '2rem',
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                paddingBottom: '1rem'
+            }}>
+                <div style={{ fontSize: '2.5rem' }}>⚛️</div>
+                <div>
+                    <h1 style={{ margin: 0, fontSize: '1.8rem', background: 'linear-gradient(to right, #61dafb, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>React Playground</h1>
+                    <p style={{ margin: '0.5rem 0 0', opacity: 0.7 }}>Edit App.jsx to see changes instantly</p>
+                </div>
+            </header>
+
+            <div style={{ 
+                background: 'rgba(255,255,255,0.05)', 
+                borderRadius: '12px', 
+                padding: '2rem',
+                textAlign: 'center' 
+            }}>
+                <h2 style={{ marginTop: 0 }}>Interactive Counter</h2>
+                <div style={{ fontSize: '4rem', fontWeight: 'bold', margin: '1rem 0', fontFamily: 'monospace' }}>
+                    {count}
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                    <button 
+                        onClick={() => setCount(c => c - 1)}
+                        style={{
+                            background: 'rgba(255,50,50,0.2)',
+                            color: '#ff6b6b',
+                            border: '1px solid rgba(255,50,50,0.3)',
+                            padding: '0.8rem 1.5rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Decrease
+                    </button>
+                    <button 
+                        onClick={() => setCount(c => c + 1)}
+                        style={{
+                            background: 'rgba(97, 218, 251, 0.2)',
+                            color: '#61dafb',
+                            border: '1px solid rgba(97, 218, 251, 0.3)',
+                            padding: '0.8rem 1.5rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        Increase
+                    </button>
+                </div>
+            </div>
+            
+            <footer style={{ marginTop: '2rem', textAlign: 'center', opacity: 0.5, fontSize: '0.9rem' }}>
+                Running with React 18 & ReactDOM
+            </footer>
+        </div>
+    );
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);`
+  }
+};
+
 export function WebDevPlayground() {
   const [files, setFiles] = useState<Record<string, File>>(DEFAULT_FILES);
+  const [savedWebFiles, setSavedWebFiles] = useState<Record<string, File>>(DEFAULT_FILES);
+  const [savedReactFiles, setSavedReactFiles] = useState<Record<string, File>>(DEFAULT_REACT_FILES);
+
   const [activeFile, setActiveFile] = useState<string>('index.html');
   const [previewFile, setPreviewFile] = useState<string>('index.html'); // New state for previewed file
   const [srcDoc, setSrcDoc] = useState('');
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isPreviewFullScreen, setIsPreviewFullScreen] = useState(false);
-  const [playgroundMode, setPlaygroundMode] = useState<'web' | 'cli'>('web');
+  const [playgroundMode, setPlaygroundMode] = useState<'web' | 'cli' | 'react'>('web');
   
   // File Management States
   const [showNewFileDialog, setShowNewFileDialog] = useState(false);
@@ -145,79 +258,155 @@ export function WebDevPlayground() {
 
   // Update preview
   useEffect(() => {
-    if (playgroundMode === 'web') {
-      const timeout = setTimeout(() => {
-        // Use the currently previewed file, fallback to active or index if missing
-        const targetHtml = files[previewFile] || files['index.html'];
-        const htmlContent = targetHtml?.language === 'html' ? targetHtml.content : files['index.html']?.content || '';
-        
-        // Inject CSS
-        const cssFiles = Object.values(files).filter(f => f.name.endsWith('.css'));
-        const cssContent = cssFiles.map(f => `<style>${f.content}</style>`).join('\n');
-        
-        // Inject JS (basic injection)
-        const jsFiles = Object.values(files).filter(f => f.name.endsWith('.js'));
-        const jsContent = jsFiles.map(f => `<script>${f.content}</script>`).join('\n');
+    const timeout = setTimeout(() => {
+        let previewDoc = '';
+        const targetHtml = files['index.html'] || Object.values(files).find(f => f.language === 'html');
+        // Fallback HTML if missing
+        const htmlContent = targetHtml?.content || '<div id="root"></div>';
 
-        let previewDoc = htmlContent;
-        if (previewDoc.includes('</head>')) {
-            previewDoc = previewDoc.replace('</head>', `${cssContent}</head>`);
-        } else {
-             previewDoc = `${cssContent}${previewDoc}`;
+        if (playgroundMode === 'react') {
+            const jsFiles = Object.values(files).filter(f => f.name.endsWith('.js') || f.name.endsWith('.jsx') || f.name.endsWith('.tsx'));
+            const jsContent = jsFiles.map(f => f.content).join('\n\n');
+            const cssFiles = Object.values(files).filter(f => f.name.endsWith('.css'));
+            const cssContent = cssFiles.map(f => `<style>${f.content}</style>`).join('\n');
+            
+            previewDoc = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Playground Preview</title>
+    <script>
+        // Polyfill process for some React libs
+        window.process = { env: { NODE_ENV: 'development' } };
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    ${cssContent}
+</head>
+<body>
+    ${htmlContent}
+    <div id="error-container" style="display:none; color: red; background: #ffe6e6; padding: 1rem; border: 1px solid red; margin: 1rem; border-radius: 8px; font-family: monospace;"></div>
+    
+    <script type="text/babel" data-presets="env,react">
+        try {
+            ${jsContent}
+        } catch (err) {
+            console.error(err);
         }
+    </script>
+</body>
+</html>`;
+        } else if (playgroundMode === 'web') {
+            previewDoc = htmlContent;
+            
+            const cssFiles = Object.values(files).filter(f => f.name.endsWith('.css'));
+            const cssContent = cssFiles.map(f => `<style>${f.content}</style>`).join('\n');
+            
+            const jsFiles = Object.values(files).filter(f => f.name.endsWith('.js'));
+            const jsContent = jsFiles.map(f => `<script>${f.content}</script>`).join('\n');
 
-        if (previewDoc.includes('</body>')) {
-            previewDoc = previewDoc.replace('</body>', `${jsContent}</body>`);
-        } else {
-            previewDoc = `${previewDoc}${jsContent}`;
+            if (previewDoc.includes('</head>')) {
+                previewDoc = previewDoc.replace('</head>', `${cssContent}</head>`);
+            } else {
+                 previewDoc = `${cssContent}${previewDoc}`;
+            }
+
+            if (previewDoc.includes('</body>')) {
+                previewDoc = previewDoc.replace('</body>', `${jsContent}</body>`);
+            } else {
+                previewDoc = `${previewDoc}${jsContent}`;
+            }
         }
+        
+        if (playgroundMode !== 'cli') {
+            const injectedScript = `
+            <script>
+                (function() {
+                const originalLog = console.log;
+                const originalError = console.error;
+                const originalWarn = console.warn;
 
-        // Add console capture & Navigation script
-        const injectedScript = `
-          <script>
-            (function() {
-              // Console Capture
-              const originalLog = console.log;
-              const originalError = console.error;
-              const originalWarn = console.warn;
+                console.log = function(...args) {
+                    window.parent.postMessage({ type: 'console', method: 'log', args: args }, '*');
+                    originalLog.apply(console, args);
+                };
 
-              console.log = function(...args) {
-                window.parent.postMessage({ type: 'console', method: 'log', args: args }, '*');
-                originalLog.apply(console, args);
-              };
+                console.error = function(...args) {
+                    window.parent.postMessage({ type: 'console', method: 'error', args: args }, '*');
+                    const errDiv = document.getElementById('error-container');
+                    if (errDiv) {
+                        errDiv.style.display = 'block';
+                        errDiv.innerText = 'Runtime Error: ' + args.join(' ');
+                    }
+                    originalError.apply(console, args);
+                };
 
-              console.error = function(...args) {
-                window.parent.postMessage({ type: 'console', method: 'error', args: args }, '*');
-                originalError.apply(console, args);
-              };
+                console.warn = function(...args) {
+                    // Suppress specific Babel warning
+                    if (args[0] && typeof args[0] === 'string' && args[0].includes('You are using the in-browser Babel transformer')) return;
+                    
+                    window.parent.postMessage({ type: 'console', method: 'warn', args: args }, '*');
+                    originalWarn.apply(console, args);
+                };
+                
+                window.onerror = function(msg, url, line, col, error) {
+                     window.parent.postMessage({ type: 'console', method: 'error', args: [msg] }, '*');
+                     const errDiv = document.getElementById('error-container');
+                     if (errDiv) {
+                        errDiv.style.display = 'block';
+                        errDiv.innerText = 'Error: ' + msg;
+                     }
+                };
 
-              console.warn = function(...args) {
-                window.parent.postMessage({ type: 'console', method: 'warn', args: args }, '*');
-                originalWarn.apply(console, args);
-              };
+                document.addEventListener('click', (e) => {
+                    const link = e.target.closest('a');
+                    if (link) {
+                    const href = link.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                        e.preventDefault();
+                        window.parent.postMessage({ type: 'navigation', path: href }, '*');
+                    }
+                    }
+                });
+                })();
+            </script>
+            `;
+            previewDoc = previewDoc.replace('<head>', `<head>${injectedScript}`);
+            setSrcDoc(previewDoc);
+        }
+    }, 800);
 
-              // Navigation Interception
-              document.addEventListener('click', (e) => {
-                const link = e.target.closest('a');
-                if (link) {
-                  const href = link.getAttribute('href');
-                  if (href && !href.startsWith('http') && !href.startsWith('#')) {
-                    e.preventDefault();
-                    window.parent.postMessage({ type: 'navigation', path: href }, '*');
-                  }
-                }
-              });
-            })();
-          </script>
-        `;
-        previewDoc = previewDoc.replace('<head>', `<head>${injectedScript}`);
-
-        setSrcDoc(previewDoc);
-      }, 500);
-
-      return () => clearTimeout(timeout);
-    }
+    return () => clearTimeout(timeout);
   }, [files, playgroundMode, previewFile]);
+
+  const handleModeSwitch = (mode: 'web' | 'cli' | 'react') => {
+      // 1. Save current files to the buffer
+      if (playgroundMode === 'web') setSavedWebFiles(files);
+      if (playgroundMode === 'react') setSavedReactFiles(files);
+
+      // 2. Switch mode
+      setPlaygroundMode(mode);
+
+      // 3. Load files from buffer
+      // Note: We use the *current* state of saved files for the target mode. 
+      // If we are switching TO web, we take from savedWebFiles.
+      // If we are switching TO react, we take from savedReactFiles.
+      if (mode === 'web') {
+          setFiles(savedWebFiles);
+          setActiveFile('index.html');
+          setPreviewFile('index.html');
+      } else if (mode === 'react') {
+          setFiles(savedReactFiles);
+          setActiveFile('App.jsx');
+          setPreviewFile('index.html'); // Valid because template has index.html
+      }
+      // CLI mostly acts as a viewer or separate tool, commonly keeps current files or has its own. 
+      // For now, let's keep CLI showing "web" files or whichever was active.
+      // Or just don't change files for CLI.
+  };
 
   // Handle console messages & navigation from iframe
   useEffect(() => {
@@ -256,6 +445,7 @@ export function WebDevPlayground() {
     if (extension === 'html') language = 'html';
     if (extension === 'css') language = 'css';
     if (extension === 'js') language = 'javascript';
+    if (extension === 'jsx' || extension === 'tsx') language = 'javascript';
 
     setFiles(prev => ({
         ...prev,
@@ -534,7 +724,7 @@ export function WebDevPlayground() {
               <Button
                 size="sm"
                 variant={playgroundMode === 'web' ? 'default' : 'ghost'}
-                onClick={() => setPlaygroundMode('web')}
+                onClick={() => handleModeSwitch('web')}
                 className={`text-xs ${playgroundMode === 'web' ? 'bg-gradient-to-r from-[#ac1ed6] to-[#c26e73] text-white' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
               >
                 <Monitor className="w-4 h-4 mr-1" />
@@ -543,11 +733,20 @@ export function WebDevPlayground() {
               <Button
                 size="sm"
                 variant={playgroundMode === 'cli' ? 'default' : 'ghost'}
-                onClick={() => setPlaygroundMode('cli')}
+                onClick={() => handleModeSwitch('cli')}
                 className={`text-xs ${playgroundMode === 'cli' ? 'bg-gradient-to-r from-[#ac1ed6] to-[#c26e73] text-white' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
               >
                 <Terminal className="w-4 h-4 mr-1" />
                 CLI
+              </Button>
+              <Button
+                size="sm"
+                variant={playgroundMode === 'react' ? 'default' : 'ghost'}
+                onClick={() => handleModeSwitch('react')}
+                className={`text-xs ${playgroundMode === 'react' ? 'bg-gradient-to-r from-[#61dafb] to-[#a78bfa] text-white' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+              >
+                <Code2 className="w-4 h-4 mr-1" />
+                React
               </Button>
             </div>
             <Button
@@ -635,7 +834,7 @@ export function WebDevPlayground() {
 
         {/* Right Side: Preview & Console/CLI */}
         <div className="flex flex-col flex-1 right-panel">
-          {playgroundMode === 'web' ? (
+          {playgroundMode !== 'cli' ? (
             <>
               {/* Live Preview */}
               <div className={`flex flex-col border-b border-white/10 ${
@@ -845,6 +1044,15 @@ export function WebDevPlayground() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Suggestions */}
+                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                            <h3 className="flex items-center gap-2 text-blue-400 font-semibold mb-2">
+                                <Info className="w-4 h-4" />
+                                Review
+                            </h3>
+                            <p className="text-gray-200 leading-relaxed">{analysisResult.suggestions}</p>
+                        </div>
                     </div>
                 )}
                 <DialogFooter>

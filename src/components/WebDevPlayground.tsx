@@ -1,226 +1,47 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Layout, Monitor, Terminal, Maximize2, Minimize2, FileCode, Plus, Trash2, Code2, Sparkles, X, Info, CheckCircle2, Lightbulb, Lock } from 'lucide-react';
+import { Layout, Monitor, Terminal, Maximize2, Minimize2, FileCode, Plus, Trash2, Code2, Sparkles, X, Info, CheckCircle2, Lightbulb, Lock, SidebarClose, SidebarOpen } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import Editor from '@monaco-editor/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { FileSystemState, INITIAL_FS_STATE, resolvePath, normalizePath, isValidFileName } from '@/utils/fileSystem';
+import { FileTree } from './FileTree';
 
-type File = {
-  name: string;
-  language: string;
-  content: string;
-};
 
-const DEFAULT_FILES: Record<string, File> = {
-  'index.html': {
-    name: 'index.html',
-    language: 'html',
-    content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Playground</title>
-</head>
-<body>
-    <div class="container">
-        <h1>Hello, Web Dev!</h1>
-        <p>Start editing to see some magic happen.</p>
-        <button id="clickMe">Click Me</button>
-    </div>
-</body>
-</html>`
-  },
-  'style.css': {
-    name: 'style.css',
-    language: 'css',
-    content: `body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f2f5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    color: #333;
-}
 
-.container {
-    text-align: center;
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.container:hover {
-    transform: translateY(-5px);
-}
-
-h1 {
-    color: #2c3e50;
-    margin-bottom: 1rem;
-}
-
-button {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: opacity 0.3s;
-}
-
-button:hover {
-    opacity: 0.9;
-}`
-  },
-  'script.js': {
-    name: 'script.js',
-    language: 'javascript',
-    content: `// Try console.log() and click "Run JS" to see output!
-console.log('Hello from JavaScript!');
-
-document.getElementById('clickMe')?.addEventListener('click', () => {
-    console.log('Button clicked!');
-    alert('You clicked the button! Nice work.');
-    
-    const container = document.querySelector('.container');
-    container.style.backgroundColor = '#e0e7ff';
-    
-    setTimeout(() => {
-        container.style.backgroundColor = 'white';
-        console.log('Background color reset');
-    }, 1000);
-});`
-  }
-};
-
-const DEFAULT_REACT_FILES: Record<string, File> = {
-  'index.html': {
-    name: 'index.html',
-    language: 'html',
-    content: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>React Playground</title>
-</head>
-<body>
-    <div id="root"></div>
-</body>
-</html>`
-  },
-  'App.jsx': {
-    name: 'App.jsx',
-    language: 'javascript',
-    content: `const { useState, useEffect } = React;
-const { createRoot } = ReactDOM;
-const { Card, CardHeader, CardTitle, CardContent } = window; // Example if we mocked UI components, but let's stick to standard HTML
-
-function App() {
-    const [count, setCount] = useState(0);
-
-    return (
-        <div style={{ 
-            fontFamily: 'system-ui, sans-serif', 
-            maxWidth: '600px', 
-            margin: '2rem auto', 
-            padding: '2rem',
-            background: 'linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)',
-            borderRadius: '16px',
-            color: 'white',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-        }}>
-            <header style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '1rem', 
-                marginBottom: '2rem',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                paddingBottom: '1rem'
-            }}>
-                <div style={{ fontSize: '2.5rem' }}>⚛️</div>
-                <div>
-                    <h1 style={{ margin: 0, fontSize: '1.8rem', background: 'linear-gradient(to right, #61dafb, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>React Playground</h1>
-                    <p style={{ margin: '0.5rem 0 0', opacity: 0.7 }}>Edit App.jsx to see changes instantly</p>
-                </div>
-            </header>
-
-            <div style={{ 
-                background: 'rgba(255,255,255,0.05)', 
-                borderRadius: '12px', 
-                padding: '2rem',
-                textAlign: 'center' 
-            }}>
-                <h2 style={{ marginTop: 0 }}>Interactive Counter</h2>
-                <div style={{ fontSize: '4rem', fontWeight: 'bold', margin: '1rem 0', fontFamily: 'monospace' }}>
-                    {count}
-                </div>
-                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                    <button 
-                        onClick={() => setCount(c => c - 1)}
-                        style={{
-                            background: 'rgba(255,50,50,0.2)',
-                            color: '#ff6b6b',
-                            border: '1px solid rgba(255,50,50,0.3)',
-                            padding: '0.8rem 1.5rem',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            fontWeight: '600',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        Decrease
-                    </button>
-                    <button 
-                        onClick={() => setCount(c => c + 1)}
-                        style={{
-                            background: 'rgba(97, 218, 251, 0.2)',
-                            color: '#61dafb',
-                            border: '1px solid rgba(97, 218, 251, 0.3)',
-                            padding: '0.8rem 1.5rem',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            fontWeight: '600',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        Increase
-                    </button>
-                </div>
-            </div>
-            
-            <footer style={{ marginTop: '2rem', textAlign: 'center', opacity: 0.5, fontSize: '0.9rem' }}>
-                Running with React 18 & ReactDOM
-            </footer>
-        </div>
-    );
-}
-
-const root = createRoot(document.getElementById('root'));
-root.render(<App />);`
-  }
-};
 
 export function WebDevPlayground() {
-  const [files, setFiles] = useState<Record<string, File>>(DEFAULT_FILES);
-  const [savedWebFiles, setSavedWebFiles] = useState<Record<string, File>>(DEFAULT_FILES);
-  const [savedReactFiles, setSavedReactFiles] = useState<Record<string, File>>(DEFAULT_REACT_FILES);
+  // File System State
+  const [fs, setFs] = useState<FileSystemState>(() => {
+      const saved = localStorage.getItem('webdev_playground_fs');
+      return saved ? JSON.parse(saved) : INITIAL_FS_STATE;
+  });
+  
+  // Persist FS
+  useEffect(() => {
+     localStorage.setItem('webdev_playground_fs', JSON.stringify(fs));
+  }, [fs]);
 
-  const [activeFile, setActiveFile] = useState<string>('index.html');
-  const [previewFile, setPreviewFile] = useState<string>('index.html'); // New state for previewed file
+  // Current State
+  const [activeFile, setActiveFile] = useState<string | null>('/index.html');
+  const [activeFileContent, setActiveFileContent] = useState(''); // Buffer for editor
+  const [previewFile, setPreviewFile] = useState<string>('/index.html');
+  
+  // Sync active file content
+  useEffect(() => {
+      if (activeFile && fs.files[activeFile]) {
+          setActiveFileContent(fs.files[activeFile].content);
+      } else {
+          setActiveFileContent('');
+      }
+  }, [activeFile, fs.files]); // Only update when activeFile changes or if the underlying file is replaced externally
+
   const [srcDoc, setSrcDoc] = useState('');
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isPreviewFullScreen, setIsPreviewFullScreen] = useState(false);
@@ -229,6 +50,8 @@ export function WebDevPlayground() {
   // File Management States
   const [showNewFileDialog, setShowNewFileDialog] = useState(false);
   const [newFileName, setNewFileName] = useState('');
+
+
 
   // AI Analyzer States
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -247,11 +70,12 @@ export function WebDevPlayground() {
   const [editorWidth, setEditorWidth] = useState(50); // percentage
   const [previewHeight, setPreviewHeight] = useState(65); // percentage of right panel
   const [isResizing, setIsResizing] = useState<'editor' | 'preview' | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   // CLI states
   const [cliInput, setCliInput] = useState('');
   const [cliOutput, setCliOutput] = useState<string[]>(['Welcome to the Enhanced Terminal Simulator!', 'Type "help" to see available commands.', '']);
-  const [currentDir, setCurrentDir] = useState('/project');
+  const [currentDir, setCurrentDir] = useState('/');
 
   // Console states
   const [consoleOutput, setConsoleOutput] = useState<Array<{type: 'log' | 'error' | 'warn', message: string}>>([]);
@@ -260,52 +84,74 @@ export function WebDevPlayground() {
   useEffect(() => {
     const timeout = setTimeout(() => {
         let previewDoc = '';
-        const targetHtml = files['index.html'] || Object.values(files).find(f => f.language === 'html');
+        // Look for index.html at root, then recursively? For now check root.
+        const targetHtml = fs.files['/index.html'] || Object.values(fs.files).find(f => f.language === 'html');
         // Fallback HTML if missing
         const htmlContent = targetHtml?.content || '<div id="root"></div>';
 
         if (playgroundMode === 'react') {
-            const jsFiles = Object.values(files).filter(f => f.name.endsWith('.js') || f.name.endsWith('.jsx') || f.name.endsWith('.tsx'));
+            const jsFiles = Object.values(fs.files).filter(f => f.name.endsWith('.js') || f.name.endsWith('.jsx') || f.name.endsWith('.tsx'));
             const jsContent = jsFiles.map(f => f.content).join('\n\n');
-            const cssFiles = Object.values(files).filter(f => f.name.endsWith('.css'));
-            const cssContent = cssFiles.map(f => `<style>${f.content}</style>`).join('\n');
+            const cssFiles = Object.values(fs.files).filter(f => f.name.endsWith('.css'));
             
-            previewDoc = `
+            const reactScripts = `
+                <script>window.process = { env: { NODE_ENV: 'development' } };</script>
+                <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+                <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+                <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+            `;
+            
+            const styles = cssFiles.map(f => `<style>${f.content}</style>`).join('\n');
+            const userScript = `
+                <script type="text/babel" data-presets="env,react">
+                    try {
+                        ${jsContent}
+                    } catch (err) {
+                        console.error(err);
+                    }
+                </script>
+            `;
+            const errorDiv = `<div id="error-container" style="display:none; color: red; background: #ffe6e6; padding: 1rem; border: 1px solid red; margin: 1rem; border-radius: 8px; font-family: monospace;"></div>`;
+
+            // If htmlContent is a full document, inject into it. Otherwise wrap it.
+            if (htmlContent.includes('<html') || htmlContent.includes('<!DOCTYPE')) {
+                previewDoc = htmlContent;
+                if (previewDoc.includes('</head>')) {
+                    previewDoc = previewDoc.replace('</head>', `${reactScripts}\n${styles}</head>`);
+                } else {
+                    previewDoc = `${reactScripts}\n${styles}\n${previewDoc}`;
+                }
+                
+                if (previewDoc.includes('</body>')) {
+                    previewDoc = previewDoc.replace('</body>', `${errorDiv}\n${userScript}</body>`);
+                } else {
+                    previewDoc = `${previewDoc}\n${errorDiv}\n${userScript}`;
+                }
+            } else {
+                 previewDoc = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>React Playground Preview</title>
-    <script>
-        // Polyfill process for some React libs
-        window.process = { env: { NODE_ENV: 'development' } };
-    </script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    ${cssContent}
+    ${reactScripts}
+    ${styles}
 </head>
 <body>
     ${htmlContent}
-    <div id="error-container" style="display:none; color: red; background: #ffe6e6; padding: 1rem; border: 1px solid red; margin: 1rem; border-radius: 8px; font-family: monospace;"></div>
-    
-    <script type="text/babel" data-presets="env,react">
-        try {
-            ${jsContent}
-        } catch (err) {
-            console.error(err);
-        }
-    </script>
+    ${errorDiv}
+    ${userScript}
 </body>
 </html>`;
+            }
         } else if (playgroundMode === 'web') {
             previewDoc = htmlContent;
             
-            const cssFiles = Object.values(files).filter(f => f.name.endsWith('.css'));
+            const cssFiles = Object.values(fs.files).filter(f => f.name.endsWith('.css'));
             const cssContent = cssFiles.map(f => `<style>${f.content}</style>`).join('\n');
             
-            const jsFiles = Object.values(files).filter(f => f.name.endsWith('.js'));
+            const jsFiles = Object.values(fs.files).filter(f => f.name.endsWith('.js'));
             const jsContent = jsFiles.map(f => `<script>${f.content}</script>`).join('\n');
 
             if (previewDoc.includes('</head>')) {
@@ -380,32 +226,165 @@ export function WebDevPlayground() {
     }, 800);
 
     return () => clearTimeout(timeout);
-  }, [files, playgroundMode, previewFile]);
+  }, [fs, playgroundMode, previewFile]);
 
   const handleModeSwitch = (mode: 'web' | 'cli' | 'react') => {
-      // 1. Save current files to the buffer
-      if (playgroundMode === 'web') setSavedWebFiles(files);
-      if (playgroundMode === 'react') setSavedReactFiles(files);
+    setPlaygroundMode(mode);
+    
+    // Switch active file based on mode for better UX
+    if (mode === 'react') {
+        const hasReactFiles = fs.files['/App.jsx'] || fs.files['/App.tsx'];
+        if (!hasReactFiles) {
+             // Auto-generate React boilerplate
+             setFs(prev => ({
+                 ...prev,
+                 files: {
+                     ...prev.files,
+                     '/index.html': {
+                         name: 'index.html',
+                         language: 'html',
+                         content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Playground</title>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>`
+                     },
+                     '/App.jsx': {
+                         name: 'App.jsx',
+                         language: 'javascript',
+                         content: `const { useState, useEffect } = React;
+const { createRoot } = ReactDOM;
 
-      // 2. Switch mode
-      setPlaygroundMode(mode);
+function App() {
+    const [count, setCount] = useState(0);
 
-      // 3. Load files from buffer
-      // Note: We use the *current* state of saved files for the target mode. 
-      // If we are switching TO web, we take from savedWebFiles.
-      // If we are switching TO react, we take from savedReactFiles.
-      if (mode === 'web') {
-          setFiles(savedWebFiles);
-          setActiveFile('index.html');
-          setPreviewFile('index.html');
-      } else if (mode === 'react') {
-          setFiles(savedReactFiles);
-          setActiveFile('App.jsx');
-          setPreviewFile('index.html'); // Valid because template has index.html
-      }
-      // CLI mostly acts as a viewer or separate tool, commonly keeps current files or has its own. 
-      // For now, let's keep CLI showing "web" files or whichever was active.
-      // Or just don't change files for CLI.
+    return (
+        <div className="p-10 font-sans text-center text-white">
+            <h1 className="text-4xl mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 font-bold">
+                Hello React ⚛️
+            </h1>
+            <p className="mb-6 opacity-80">Start editing /App.jsx to see some magic!</p>
+            
+            <button 
+                onClick={() => setCount(c => c + 1)}
+                className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full transition-all border border-white/20"
+            >
+                Count is {count}
+            </button>
+        </div>
+    );
+}
+
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);`
+                     },
+                     '/style.css': {
+                         name: 'style.css',
+                         language: 'css',
+                         content: `body { background: #111; color: white; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }`
+                     }
+                 }
+             }));
+             setActiveFile('/App.jsx');
+             toast.success("React boilerplate generated!");
+        } else {
+             setActiveFile(fs.files['/App.jsx'] ? '/App.jsx' : '/App.tsx');
+        }
+    } else if (mode === 'web') {
+        // Ensure web defaults exist
+        const webFiles = ['/index.html', '/style.css', '/script.js'];
+        const missingFiles = webFiles.filter(f => !fs.files[f]);
+        
+        if (missingFiles.length > 0) {
+            setFs(prev => ({
+                ...prev,
+                files: {
+                    ...prev.files,
+                    ...(!fs.files['/index.html'] ? {
+                        '/index.html': {
+                            name: 'index.html',
+                            language: 'html',
+                            content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Playground</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Hello Web! 🚀</h1>
+        <p>Start editing index.html, style.css, and script.js</p>
+        <button id="btn">Click Me</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>`
+                        }
+                    } : {}),
+                    ...(!fs.files['/style.css'] ? {
+                        '/style.css': {
+                            name: 'style.css',
+                            language: 'css',
+                            content: `body {
+    background: #0d0d0d;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.container {
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
+h1 {
+    background: linear-gradient(to right, #ac1ed6, #c26e73);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+button {
+    background: linear-gradient(135deg, #ac1ed6, #c26e73);
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 1rem;
+}
+button:hover { opacity: 0.9; }`
+                        }
+                    } : {}),
+                    ...(!fs.files['/script.js'] ? {
+                        '/script.js': {
+                            name: 'script.js',
+                            language: 'javascript',
+                            content: `console.log('Hello from Script!');
+document.getElementById('btn').addEventListener('click', () => {
+    alert('Button clicked! 🎉');
+});`
+                        }
+                    } : {})
+                }
+            }));
+            toast.success("Web environment initialized!");
+        }
+        setActiveFile('/index.html');
+    }
   };
 
   // Handle console messages & navigation from iframe
@@ -421,9 +400,8 @@ export function WebDevPlayground() {
           ).join(' ')
         }]);
       } else if (event.data.type === 'navigation') {
-        // Handle virtual navigation
         const targetPath = event.data.path;
-        if (files[targetPath]) {
+        if (Object.keys(fs.files).includes(targetPath)) {
             setPreviewFile(targetPath);
             setConsoleOutput(prev => [...prev, { type: 'log', message: `Navigated to ${targetPath}` }]);
         } else {
@@ -435,50 +413,66 @@ export function WebDevPlayground() {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [files]);
+  }, [fs]);
 
   const handleCreateFile = () => {
     if (!newFileName.trim()) return;
     
-    const extension = newFileName.split('.').pop()?.toLowerCase();
+    let path = newFileName.trim();
+    if (!path.startsWith('/')) path = '/' + path; // Default to root if no path provided
+
+    if (!isValidFileName(path.split('/').pop() || '')) {
+        toast.error('Invalid file name');
+        return;
+    }
+
+    if (fs.files[path]) {
+        toast.error('File already exists');
+        return;
+    }
+
+    const extension = path.split('.').pop()?.toLowerCase();
     let language = 'plaintext';
     if (extension === 'html') language = 'html';
     if (extension === 'css') language = 'css';
     if (extension === 'js') language = 'javascript';
     if (extension === 'jsx' || extension === 'tsx') language = 'javascript';
 
-    setFiles(prev => ({
+    setFs(prev => ({
         ...prev,
-        [newFileName]: {
-            name: newFileName,
-            language,
-            content: ''
+        files: {
+            ...prev.files,
+            [path]: {
+                name: path.split('/').pop() || '',
+                language,
+                content: ''
+            }
         }
     }));
-    setActiveFile(newFileName);
+    setActiveFile(path);
     setNewFileName('');
     setShowNewFileDialog(false);
-    toast.success(`File ${newFileName} created`);
+    toast.success(`File ${path} created`);
   };
 
-  const handleDeleteFile = (fileName: string) => {
-    if (Object.keys(files).length <= 1) {
+  const handleDeleteFile = (path: string) => {
+    if (Object.keys(fs.files).length <= 1) {
         toast.error("Cannot delete the last file");
         return;
     }
-    const newFiles = { ...files };
-    delete newFiles[fileName];
-    setFiles(newFiles);
     
-    if (activeFile === fileName) {
-        setActiveFile(Object.keys(newFiles)[0]);
+    setFs(prev => {
+        const newFiles = { ...prev.files };
+        delete newFiles[path];
+        return { ...prev, files: newFiles };
+    });
+    
+    if (activeFile === path) {
+        const remainingFiles = Object.keys(fs.files).filter(f => f !== path);
+        setActiveFile(remainingFiles[0] || null);
     }
-    // If we deleted the current preview, reset to index.html or first file
-    if (previewFile === fileName) {
-        setPreviewFile('index.html');
-    }
-
-    toast.success(`File ${fileName} deleted`);
+    
+    toast.success(`File ${path} deleted`);
   };
 
   const checkAnalysisLimit = () => {
@@ -547,7 +541,7 @@ export function WebDevPlayground() {
     setIsAnalyzing(true);
     try {
         const filesPayload = Object.fromEntries(
-            Object.entries(files).map(([name, file]) => [name, file.content])
+            Object.entries(fs.files).map(([name, file]) => [name, file.content])
         );
 
       const { data, error } = await supabase.functions.invoke('ai-learning', {
@@ -583,6 +577,7 @@ export function WebDevPlayground() {
       const newOutput = [...cliOutput, `${currentDir} $ ${command}`];
       setCliInput('');
 
+      // Simple parser: split by spaces but respect quotes? For now simple split is fine.
       const parts = command.split(' ');
       const cmd = parts[0].toLowerCase();
       const args = parts.slice(1);
@@ -594,47 +589,116 @@ export function WebDevPlayground() {
         case 'clear':
           setCliOutput([]);
           return;
-        case 'ls':
-          newOutput.push(Object.keys(files).join('  '));
-          break;
         case 'pwd':
           newOutput.push(currentDir);
+          break;
+        case 'ls': {
+          const targetPath = args[0] || '.';
+          const resolved = resolvePath(currentDir, targetPath);
+          
+           // Check if it's a folder
+          if (fs.folders.includes(resolved) || resolved === '/') {
+               // Get contents
+               const folderItems = fs.folders.filter(f => {
+                   const parent = resolvePath(f, '..');
+                   return parent === resolved && f !== resolved;
+               }).map(f => f.split('/').pop() + '/');
+               
+               const fileItems = Object.keys(fs.files).filter(f => {
+                   const parent = resolvePath(f, '..');
+                   return parent === resolved;
+               }).map(f => f.split('/').pop());
+               
+               newOutput.push([...folderItems, ...fileItems].join('  '));
+          } else if (fs.files[resolved]) {
+              newOutput.push(resolved);
+          } else {
+              newOutput.push(`ls: cannot access '${targetPath}': No such file or directory`);
+          }
+          break;
+        }
+        case 'cd': {
+           const target = args[0] || '~';
+           const resolved = resolvePath(currentDir, target);
+           
+           if (fs.folders.includes(resolved) || resolved === '/') {
+               setCurrentDir(resolved);
+           } else {
+               newOutput.push(`cd: no such file or directory: ${target}`);
+           }
+           break;
+        }
+        case 'mkdir': {
+            const target = args[0];
+            if (!target) { newOutput.push('mkdir: missing operand'); break; }
+            const resolved = resolvePath(currentDir, target);
+            if (fs.folders.includes(resolved)) {
+                 newOutput.push(`mkdir: cannot create directory '${target}': File exists`);
+            } else {
+                 setFs(prev => ({ ...prev, folders: [...prev.folders, resolved] }));
+            }
+            break;
+        }
+        case 'touch': {
+            const target = args[0];
+            if (!target) { newOutput.push('touch: missing operand'); break; }
+            const resolved = resolvePath(currentDir, target);
+            if (fs.files[resolved]) break; // Update timestamp in real OS, here do nothing
+            
+            // Basic file creation
+             setFs(prev => ({
+                ...prev,
+                files: {
+                    ...prev.files,
+                    [resolved]: {
+                        name: resolved.split('/').pop() || '',
+                        language: 'plaintext',
+                        content: ''
+                    }
+                }
+            }));
+            break;
+        }
+        case 'rm': {
+             // Supports recursive delete conceptually if we filter
+             const target = args[0];
+             if (!target) { newOutput.push('rm: missing operand'); break; }
+             const resolved = resolvePath(currentDir, target);
+             
+             if (fs.files[resolved]) {
+                 handleDeleteFile(resolved);
+                 newOutput.push(`Removed '${target}'`);
+             } else if (fs.folders.includes(resolved)) {
+                 // Check if empty or -r (simplified for now: allow delete if folder exists)
+                 // We need to recursively delete children
+                 setFs(prev => {
+                     const folderPrefix = resolved === '/' ? '/' : resolved + '/';
+                     const newFiles = { ...prev.files };
+                     Object.keys(newFiles).forEach(k => {
+                         if (k.startsWith(folderPrefix)) delete newFiles[k];
+                     });
+                     
+                     const newFolders = prev.folders.filter(f => !f.startsWith(folderPrefix) && f !== resolved);
+                     return { files: newFiles, folders: newFolders };
+                 });
+                  newOutput.push(`Removed directory '${target}'`);
+             } else {
+                  newOutput.push(`rm: cannot remove '${target}': No such file or directory`);
+             }
+             break;
+        }
+        case 'echo':
+          newOutput.push(args.join(' '));
           break;
         case 'date':
           newOutput.push(new Date().toString());
           break;
-        case 'echo':
-          newOutput.push(args.join(' '));
-          break;
-        case 'mkdir':
-            newOutput.push(`Directory '${args[0]}' created (simulated)`);
-            break;
-        case 'touch':
-            handleCreateFileCLI(args[0]);
-            newOutput.push(`File '${args[0]}' created`);
-            break;
-        case 'rm':
-            if(files[args[0]]) {
-                handleDeleteFile(args[0]);
-                newOutput.push(`Removed '${args[0]}'`);
-            } else {
-                 newOutput.push(`rm: cannot remove '${args[0]}': No such file`);
-            }
-            break;
         default:
           newOutput.push(`Command not found: ${cmd}`);
       }
       setCliOutput(newOutput);
     }
   };
-
-  const handleCreateFileCLI = (name: string) => {
-      if(!name) return;
-      setFiles(prev => ({
-        ...prev,
-        [name]: { name, language: 'plaintext', content: '' }
-      }));
-  }
 
 
   const toggleFullScreen = () => {
@@ -679,10 +743,7 @@ export function WebDevPlayground() {
     }
   }, [isResizing, handleEditorResize, handleResizeEnd]);
 
-  const removeFile = (e: React.MouseEvent, fileName: string) => {
-      e.stopPropagation();
-      handleDeleteFile(fileName);
-  }
+
 
   return (
     <motion.div
@@ -725,7 +786,7 @@ export function WebDevPlayground() {
                 size="sm"
                 variant={playgroundMode === 'web' ? 'default' : 'ghost'}
                 onClick={() => handleModeSwitch('web')}
-                className={`text-xs ${playgroundMode === 'web' ? 'bg-gradient-to-r from-[#ac1ed6] to-[#c26e73] text-white' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+                className={`text-xs border ${playgroundMode === 'web' ? 'bg-[#1a1a1a] border-[#ac1ed6]/50 text-[#ac1ed6] shadow-[0_0_10px_rgba(172,30,214,0.2)]' : 'border-transparent text-white/60 hover:text-white hover:bg-white/10'}`}
               >
                 <Monitor className="w-4 h-4 mr-1" />
                 Web
@@ -734,7 +795,7 @@ export function WebDevPlayground() {
                 size="sm"
                 variant={playgroundMode === 'cli' ? 'default' : 'ghost'}
                 onClick={() => handleModeSwitch('cli')}
-                className={`text-xs ${playgroundMode === 'cli' ? 'bg-gradient-to-r from-[#ac1ed6] to-[#c26e73] text-white' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+                className={`text-xs border ${playgroundMode === 'cli' ? 'bg-[#1a1a1a] border-green-500/50 text-green-400 shadow-[0_0_10px_rgba(74,222,128,0.2)]' : 'border-transparent text-white/60 hover:text-white hover:bg-white/10'}`}
               >
                 <Terminal className="w-4 h-4 mr-1" />
                 CLI
@@ -743,17 +804,18 @@ export function WebDevPlayground() {
                 size="sm"
                 variant={playgroundMode === 'react' ? 'default' : 'ghost'}
                 onClick={() => handleModeSwitch('react')}
-                className={`text-xs ${playgroundMode === 'react' ? 'bg-gradient-to-r from-[#61dafb] to-[#a78bfa] text-white' : 'text-white/60 hover:text-white hover:bg-white/10'}`}
+                className={`text-xs border ${playgroundMode === 'react' ? 'bg-[#1a1a1a] border-[#61dafb]/50 text-[#61dafb] shadow-[0_0_10px_rgba(97,218,251,0.2)]' : 'border-transparent text-white/60 hover:text-white hover:bg-white/10'}`}
               >
                 <Code2 className="w-4 h-4 mr-1" />
                 React
               </Button>
             </div>
             <Button
-              variant="ghost"
+              variant="ghost" 
               size="icon"
               onClick={toggleFullScreen}
               className="text-white/60 hover:text-white hover:bg-white/10"
+              title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
             >
               {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
             </Button>
@@ -761,67 +823,114 @@ export function WebDevPlayground() {
         </div>
       </CardHeader>
 
-      <CardContent className="p-0 flex-1 flex overflow-hidden playground-container">
+      <CardContent className="p-0 flex-1 flex overflow-hidden playground-container relative">
+        {/* Background Glow */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#ac1ed6]/5 via-transparent to-[#c26e73]/5 pointer-events-none" />
         {/* Left Side: File Explorer & Editor */}
         <div className="flex flex-col border-r border-white/10" style={{ width: `${editorWidth}%` }}>
           
-          {/* File Tabs / Explorer Bar */}
-          <div className="flex items-center px-2 py-6 bg-[#1a1a1a] border-b border-white/10 overflow-x-auto gap-1">
-             {Object.values(files).map((file) => (
-                 <div 
-                    key={file.name}
-                    onClick={() => setActiveFile(file.name)}
-                    className={`
-                        flex items-center gap-2 px-3 py-1.5 rounded-t-md cursor-pointer text-sm min-w-[100px] border-b-2 transition-colors
-                        ${activeFile === file.name 
-                            ? 'bg-[#0d0d0d] text-[#ac1ed6] border-[#ac1ed6]' 
-                            : 'text-white/60 hover:bg-white/5 border-transparent'}
-                    `}
-                 >
-                    <FileCode className="w-3 h-3" />
-                    <span className="truncate max-w-[100px]">{file.name}</span>
-                    {/* Keep mini delete button as fallback */}
-                    <button 
-                        onClick={(e) => removeFile(e, file.name)}
-                        className="ml-auto opacity-50 hover:opacity-100 group-hover:opacity-100 text-white/40 hover:text-red-400"
-                    >
-                        <X className="w-3 h-3" />
-                    </button>
-                 </div>
-             ))}
-             <Button
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 text-white/60 hover:text-black"
-                onClick={() => setShowNewFileDialog(true)}
-             >
-                <Plus className="w-4 h-4" />
-             </Button>
-          </div>
+           <div className="flex flex-1 overflow-hidden">
+                {/* File Tree Sidebar */}
+                <div 
+                    className={`bg-[#161616] border-r border-white/5 flex flex-col transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-12'}`}
+                >
+                    <div className={cn("p-3 border-b border-white/5 flex items-center shrink-0", isSidebarOpen ? "justify-between" : "justify-center")}>
+                        {isSidebarOpen && <span className="text-white/60 text-xs font-medium uppercase tracking-wider">Explorer</span>}
+                        <Button
+                            variant="ghost" 
+                            size="icon"
+                            className="h-6 w-6 text-white/60 hover:text-white"
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
+                        >
+                            {isSidebarOpen ? <SidebarClose className="w-3.5 h-3.5" /> : <SidebarOpen className="w-3.5 h-3.5" />}
+                        </Button>
+                    </div>
+                    
+                    {isSidebarOpen && (
+                        <>
+                            <div className="px-3 py-2 flex justify-end">
+                                 <Button
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="h-6 w-6 text-white/60 hover:text-white"
+                                    onClick={() => setShowNewFileDialog(true)}
+                                    title="New File"
+                                 >
+                                    <Plus className="w-3.5 h-3.5" />
+                                 </Button>
+                            </div>
+                            <FileTree 
+                                fs={fs} 
+                                currentPath={currentDir}
+                                activeFile={activeFile}
+                                onFileSelect={setActiveFile}
+                                onDelete={handleDeleteFile}
+                                className="flex-1"
+                            />
+                        </>
+                    )}
+                </div>
 
-          {/* Editor Area */}
-          <div className="flex-1 relative bg-[#1e1e1e]">
-             {activeFile && files[activeFile] && (
-                <Editor
-                  height="100%"
-                  language={files[activeFile].language}
-                  theme="vs-dark"
-                  value={files[activeFile].content}
-                  onChange={(value) => setFiles(prev => ({
-                      ...prev,
-                      [activeFile]: { ...prev[activeFile], content: value || '' }
-                  }))}
-                  options={{
-                    fontSize: 14,
-                    fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
-                    minimap: { enabled: false },
-                    automaticLayout: true,
-                    wordWrap: 'on',
-                    padding: { top: 16 },
-                  }}
-                />
-             )}
-          </div>
+                {/* Editor Area */}
+                <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
+                    {/* Active File Tab Bar (Simplified) */}
+                     {activeFile && (
+                         <div className="flex bg-[#1a1a1a] border-b border-white/10 overflow-x-auto">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-[#1e1e1e] border-t-2 border-[#ac1ed6] text-white text-sm">
+                                <FileCode className="w-3.5 h-3.5 text-[#ac1ed6]" />
+                                <span>{activeFile.split('/').pop()}</span>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setActiveFile(null); }}
+                                    className="ml-2 text-white/40 hover:text-white"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </div>
+                         </div>
+                     )}
+
+                     <div className="flex-1 relative">
+                        {activeFile ? (
+                            <Editor
+                                height="100%"
+                                language={fs.files[activeFile]?.language || 'plaintext'}
+                                theme="vs-dark"
+                                value={activeFileContent}
+                                onChange={(value) => {
+                                    const newContent = value || '';
+                                    setActiveFileContent(newContent);
+                                    setFs(prev => ({
+                                        ...prev,
+                                        files: {
+                                            ...prev.files,
+                                            [activeFile]: {
+                                                ...prev.files[activeFile],
+                                                content: newContent
+                                            }
+                                        }
+                                    }));
+                                }}
+                                options={{
+                                    fontSize: 14,
+                                    fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
+                                    minimap: { enabled: false },
+                                    automaticLayout: true,
+                                    wordWrap: 'on',
+                                    padding: { top: 16 },
+                                }}
+                            />
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-white/20">
+                                <div className="text-center">
+                                    <div className="text-4xl mb-4 opacity-50">⚡️</div>
+                                    <p>Select a file to edit</p>
+                                </div>
+                            </div>
+                        )}
+                     </div>
+                </div>
+           </div>
         </div>
 
         {/* Vertical Resize Handle */}
@@ -1044,15 +1153,6 @@ export function WebDevPlayground() {
                                 </div>
                             </div>
                         )}
-
-                        {/* Suggestions */}
-                        <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                            <h3 className="flex items-center gap-2 text-blue-400 font-semibold mb-2">
-                                <Info className="w-4 h-4" />
-                                Review
-                            </h3>
-                            <p className="text-gray-200 leading-relaxed">{analysisResult.suggestions}</p>
-                        </div>
                     </div>
                 )}
                 <DialogFooter>

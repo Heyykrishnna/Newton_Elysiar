@@ -138,128 +138,179 @@ export function WebDevQuestions() {
       {/* Leaderboard
       <WebDevLeaderboard /> */}
 
-      {/* Questions Section */}
-      <Card className="border-2 border-white/10 bg-[#221f20] rounded-2xl">
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <CardTitle className="text-white text-xl flex items-center gap-2">
-                <Code2 className="w-5 h-5 text-[#ac1ed6]" />
-                Practice Questions ({stats.total})
-              </CardTitle>
-              <CardDescription className="text-white/60">
-                Click on a question to start the coding challenge
-              </CardDescription>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-              <Input
-                placeholder="Search questions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-[250px] bg-[#1a1a1a] border-white/10 text-white"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="flex flex-wrap gap-4 mb-6">
-            <Tabs value={selectedCategory} onValueChange={(v: any) => setSelectedCategory(v)}>
-              <TabsList className="bg-[#1a1a1a] border border-white/10">
-                <TabsTrigger value="all" className="text-white/60 data-[state=active]:bg-[#ac1ed6] data-[state=active]:text-white">All</TabsTrigger>
-                <TabsTrigger value="HTML" className="text-white/60 data-[state=active]:bg-orange-500 data-[state=active]:text-white">HTML</TabsTrigger>
-                <TabsTrigger value="CSS" className="text-white/60 data-[state=active]:bg-blue-500 data-[state=active]:text-white">CSS</TabsTrigger>
-                <TabsTrigger value="JavaScript" className="text-white/60 data-[state=active]:bg-yellow-500 data-[state=active]:text-black">JS</TabsTrigger>
-                <TabsTrigger value="React" className="text-white/60 data-[state=active]:bg-cyan-500 data-[state=active]:text-white">React</TabsTrigger>
-                <TabsTrigger value="End Game" className="text-white/60 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white">🔥 End Game</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <Tabs value={selectedDifficulty} onValueChange={(v: any) => setSelectedDifficulty(v)}>
-              <TabsList className="bg-[#1a1a1a] border border-white/10">
-                <TabsTrigger value="all" className="text-white/60 data-[state=active]:bg-white/20 data-[state=active]:text-white">All</TabsTrigger>
-                <TabsTrigger value="Easy" className="text-white/60 data-[state=active]:bg-green-500 data-[state=active]:text-white">Easy</TabsTrigger>
-                <TabsTrigger value="Medium" className="text-white/60 data-[state=active]:bg-yellow-500 data-[state=active]:text-black">Medium</TabsTrigger>
-                <TabsTrigger value="Hard" className="text-white/60 data-[state=active]:bg-red-500 data-[state=active]:text-white">Hard</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar Filters */}
+        <div className="space-y-6">
+          <Card className="border-2 border-white/10 bg-[#221f20] rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-white text-lg">Filters</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Input
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 bg-[#1a1a1a] border-white/10 text-white"
+                />
+              </div>
 
-          {/* Questions List */}
-          <ScrollArea className="h-[500px]">
-            <div className="space-y-3">
-              {filteredQuestions.map((question, index) => {
-                const isCompleted = completedIds.has(question.id);
-                return (
-                  <motion.div
-                    key={question.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.02 }}
-                  >
-                    <div 
-                      className={`p-4 rounded-xl border transition-all cursor-pointer hover:border-[#ac1ed6]/50 ${
-                        isCompleted 
-                          ? 'bg-green-500/5 border-green-500/30' 
-                          : 'bg-[#1a1a1a] border-white/10 hover:bg-[#252525]'
+              {/* Categories */}
+              <div>
+                <h3 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">Categories</h3>
+                <div className="space-y-2">
+                  {[
+                    { id: 'all', label: 'All Questions', icon: <Code2 className="w-4 h-4" /> },
+                    { id: 'HTML', label: 'HTML', icon: <Globe className="w-4 h-4" /> },
+                    { id: 'CSS', label: 'CSS', icon: <Palette className="w-4 h-4" /> },
+                    { id: 'JavaScript', label: 'JavaScript', icon: <FileJson className="w-4 h-4" /> },
+                    { id: 'React', label: 'React', icon: <Code2 className="w-4 h-4" /> },
+                    { id: 'End Game', label: 'End Game', icon: <Flame className="w-4 h-4" /> },
+                  ].map((cat) => (
+                    <Button
+                      key={cat.id}
+                      variant="ghost"
+                      className={`w-full justify-start ${
+                        selectedCategory === cat.id 
+                          ? 'bg-[#ac1ed6]/10 text-[#ac1ed6]' 
+                          : 'text-white/60 hover:text-white hover:bg-white/5'
                       }`}
-                      onClick={() => handleStartQuestion(question)}
+                      onClick={() => setSelectedCategory(cat.id as any)}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3 flex-1">
-                          <div className="mt-1">
-                            {isCompleted ? (
-                              <CheckCircle2 className="w-5 h-5 text-green-500" />
-                            ) : (
-                              <Circle className="w-5 h-5 text-white/30" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              {getCategoryIcon(question.category)}
-                              <h3 className={`font-medium ${isCompleted ? 'text-green-400' : 'text-white'}`}>
-                                {question.title}
-                              </h3>
-                              {question.recommended && (
-                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                              )}
-                            </div>
-                            <p className="text-sm text-white/50 mb-2">{question.description}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {question.tags.slice(0, 3).map(tag => (
-                                <Badge key={tag} variant="outline" className="text-xs text-white/40 border-white/10">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
+                      {cat.icon}
+                      <span className="ml-2">{cat.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Difficulty */}
+              <div>
+                <h3 className="text-sm font-medium text-white/60 mb-3 uppercase tracking-wider">Difficulty</h3>
+                <div className="flex flex-wrap gap-2">
+                  {['all', 'Easy', 'Medium', 'Hard'].map((diff) => (
+                    <Badge
+                      key={diff}
+                      variant="outline"
+                      className={`cursor-pointer transition-all ${
+                        selectedDifficulty === diff
+                          ? 'bg-white text-black border-white'
+                          : 'text-white/40 border-white/10 hover:border-white/30'
+                      }`}
+                      onClick={() => setSelectedDifficulty(diff as any)}
+                    >
+                      {diff}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Questions List */}
+        <div className="lg:col-span-3 space-y-6">
+            <Card className="border-2 border-white/10 bg-[#221f20] rounded-2xl h-full">
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle className="text-white text-xl flex items-center gap-2">
+                                <Code2 className="w-5 h-5 text-[#ac1ed6]" />
+                                Practice Questions
+                            </CardTitle>
+                            <CardDescription className="text-white/60 mt-1">
+                                {filteredQuestions.length} challenges found
+                            </CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={getDifficultyColor(question.difficulty)}>
-                            {question.difficulty}
-                          </Badge>
-                          <Button
-                            size="sm"
-                            className="bg-[#ac1ed6] hover:bg-[#ac1ed6]/80 text-white"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartQuestion(question);
-                            }}
-                          >
-                            <Play className="w-4 h-4 mr-1" />
-                            Start
-                          </Button>
-                        </div>
-                      </div>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+                </CardHeader>
+                <CardContent>
+                    <ScrollArea className="h-[600px] pr-4">
+                        <div className="space-y-3">
+                        {filteredQuestions.map((question, index) => {
+                            const isCompleted = completedIds.has(question.id);
+                            return (
+                            <motion.div
+                                key={question.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.02 }}
+                            >
+                                <div 
+                                className={`p-4 rounded-xl border transition-all cursor-pointer hover:border-[#ac1ed6]/50 ${
+                                    isCompleted 
+                                    ? 'bg-green-500/5 border-green-500/30' 
+                                    : 'bg-[#1a1a1a] border-white/10 hover:bg-[#252525]'
+                                }`}
+                                onClick={() => handleStartQuestion(question)}
+                                >
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex items-start gap-3 flex-1">
+                                    <div className="mt-1">
+                                        {isCompleted ? (
+                                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                        ) : (
+                                        <Circle className="w-5 h-5 text-white/30" />
+                                        )}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                        {getCategoryIcon(question.category)}
+                                        <h3 className={`font-medium ${isCompleted ? 'text-green-400' : 'text-white'}`}>
+                                            {question.title}
+                                        </h3>
+                                        {question.recommended && (
+                                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                        )}
+                                        </div>
+                                        <p className="text-sm text-white/50 mb-2">{question.description}</p>
+                                        <div className="flex flex-wrap gap-1">
+                                        {question.tags.slice(0, 3).map(tag => (
+                                            <Badge key={tag} variant="outline" className="text-xs text-white/40 border-white/10">
+                                            {tag}
+                                            </Badge>
+                                        ))}
+                                        </div>
+                                    </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                    <Badge className={getDifficultyColor(question.difficulty)}>
+                                        {question.difficulty}
+                                    </Badge>
+                                    <Button
+                                        size="sm"
+                                        className="bg-[#ac1ed6] hover:bg-[#ac1ed6]/80 text-white"
+                                        onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStartQuestion(question);
+                                        }}
+                                    >
+                                        <Play className="w-4 h-4 mr-1" />
+                                        Start
+                                    </Button>
+                                    </div>
+                                </div>
+                                </div>
+                            </motion.div>
+                            );
+                        })}
+                        
+                        {filteredQuestions.length === 0 && (
+                            <div className="text-center py-20">
+                                <Search className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                                <h3 className="text-white/40 text-lg">No questions found</h3>
+                                <p className="text-white/20 text-sm">Try adjusting your filters</p>
+                            </div>
+                        )}
+                        </div>
+                    </ScrollArea>
+                </CardContent>
+            </Card>
+        </div>
+      </div>
 
       {/* Contest Playground Dialog */}
       {selectedQuestion && (

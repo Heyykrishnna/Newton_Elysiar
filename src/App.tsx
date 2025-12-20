@@ -44,7 +44,6 @@ import Notes from "./pages/Notes";
 import WorldNews from "./pages/WorldNews";
 import EducatorDashboard from "./pages/EducatorDashboard";
 import ComingSoon from "./pages/coming.tsx";
-import ChatPage from "./pages/ChatPage";
 import { Analytics } from '@vercel/analytics/react';
 
 
@@ -131,8 +130,6 @@ const App = () => {
                 <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
                 <Route path="/world-news" element={<ProtectedRoute><WorldNews /></ProtectedRoute>} />
                 <Route path="/educator-dashboard" element={<ProtectedRoute><EducatorDashboard /></ProtectedRoute>} />
-                <Route path="/chat" element={<ProtectedRoute><ChatPage userType="student" /></ProtectedRoute>} />
-                <Route path="/educator-chat" element={<ProtectedRoute><ChatPage userType="educator" /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Analytics />

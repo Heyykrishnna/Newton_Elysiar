@@ -613,6 +613,86 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          id: string
+          is_muted: boolean | null
+          joined_at: string | null
+          last_read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          is_muted?: boolean | null
+          joined_at?: string | null
+          last_read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          is_muted?: boolean | null
+          joined_at?: string | null
+          last_read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          is_archived: boolean | null
+          last_message_at: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_archived?: boolean | null
+          last_message_at?: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_archived?: boolean | null
+          last_message_at?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           color: string
@@ -654,6 +734,60 @@ export type Database = {
           visibility?: string | null
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          file_url: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean | null
+          message_type: Database["public"]["Enums"]["message_type"] | null
+          sender_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          file_url?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_edited?: boolean | null
+          message_type?: Database["public"]["Enums"]["message_type"] | null
+          sender_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          file_url?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_edited?: boolean | null
+          message_type?: Database["public"]["Enums"]["message_type"] | null
+          sender_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       owner_notifications: {
         Row: {
@@ -1164,6 +1298,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_presence: {
+        Row: {
+          last_seen: string | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          last_seen?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          last_seen?: string | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       web_dev_daily_activity: {
         Row: {
           activity_date: string
@@ -1359,7 +1522,10 @@ export type Database = {
         | "level_up_5"
         | "level_up_10"
         | "level_up_25"
+      conversation_type: "educator_student" | "peer_to_peer"
+      message_type: "text" | "file" | "image" | "code"
       user_role: "owner" | "student"
+      user_status: "online" | "away" | "offline"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1505,7 +1671,10 @@ export const Constants = {
         "level_up_10",
         "level_up_25",
       ],
+      conversation_type: ["educator_student", "peer_to_peer"],
+      message_type: ["text", "file", "image", "code"],
       user_role: ["owner", "student"],
+      user_status: ["online", "away", "offline"],
     },
   },
 } as const

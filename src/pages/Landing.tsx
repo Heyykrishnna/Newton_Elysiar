@@ -15,6 +15,7 @@ import { InteractiveFooter } from '@/components/landing/InteractiveFooter';
 import { FallingStars } from '@/components/landing/FallingStars';
 import ColorBends from '@/components/ColorBends';
 import { InfiniteMovingCardsDemo } from '@/components/testimonials';
+import { Snowfall } from 'react-snowfall';
 
 // Discover styled button used in hero
 import styled from 'styled-components';
@@ -311,6 +312,9 @@ const Landing = () => {
   ];
 
   return (<>
+    <div className="fixed inset-0 pointer-events-none z-[1]">
+      <Snowfall color='#03c061ff' />
+    </div>
     <FallingStars />
     <div className="min-h-screen bg-[#fafafa] text-slate-900 selection:bg-[#8a5cff]/30 selection:text-slate-900 overflow-x-hidden">
       {/* Header */}

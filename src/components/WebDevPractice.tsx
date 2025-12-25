@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Code2, Globe, Layers, FileJson, Terminal, BookOpen } from 'lucide-react';
+import { Code2, Globe, Layers, FileJson, Terminal, BookOpen, ChevronUp, ChevronDown } from 'lucide-react';
 import { WebDevPlayground } from './WebDevPlayground';
 import { WebDevQuestions } from './WebDevQuestions';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const LEARNING_CONTENT = {
   html: {
@@ -54,60 +58,103 @@ const LEARNING_CONTENT = {
 };
 
 export function WebDevPractice() {
-  return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Learning Section */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="border-2 border-white/10 bg-[#221f20] shadow-lg rounded-2xl h-[800px] flex flex-col">
-            <CardHeader className="bg-gradient-to-r from-[#ac1ed6]/5 to-[#c26e73]/5 border-b border-white/10 shrink-0">
-              <CardTitle className="flex items-center gap-2 text-white text-xl">
-                <BookOpen className="w-5 h-5 text-[#ac1ed6]" />
-                Interview Q&A
-              </CardTitle>
-              <CardDescription className="text-white/60">
-                Master the fundamentals with curated Q&A
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0 flex-1 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-6 space-y-6">
-                  {Object.entries(LEARNING_CONTENT).map(([key, section]) => (
-                    <div key={key} className="space-y-3">
-                      <div className="flex items-center gap-2 text-white/80 font-semibold">
-                        {section.icon}
-                        {section.title}
-                      </div>
-                      <Accordion type="single" collapsible className="w-full">
-                        {section.questions.map((item, index) => (
-                          <AccordionItem key={index} value={`${key}-${index}`} className="border-white/10">
-                            <AccordionTrigger className="text-white/70 hover:text-white text-sm text-left">
-                              {item.q}
-                            </AccordionTrigger>
-                            <AccordionContent className="text-white/50 text-sm leading-relaxed">
-                              {item.a}
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
+  const [isQAPanelOpen, setIsQAPanelOpen] = useState(false);
 
-        {/* Playground Section */}
-        <div className="lg:col-span-2">
-          <WebDevPlayground />
-        </div>
+  return (
+    <div className="space-y-8 relative">
+      {/* Full-width Playground Section */}
+      <div className="w-full">
+        <WebDevPlayground />
       </div>
 
       {/* Practice Questions Section - Full Width */}
       <div className="w-full">
         <WebDevQuestions />
       </div>
+
+      {/* Floating Toggle Button */}
+      <Button
+        onClick={() => setIsQAPanelOpen(!isQAPanelOpen)}
+        className={cn(
+          "fixed bottom-6 left-6 z-40 h-14 px-6 rounded-full shadow-2xl transition-all duration-300",
+          "bg-gradient-to-r from-[#ac1ed6] to-[#c26e73] hover:from-[#ac1ed6]/90 hover:to-[#c26e73]/90",
+          "border-2 border-white/20 backdrop-blur-sm",
+          isQAPanelOpen ? "shadow-[0_0_30px_rgba(172,30,214,0.5)]" : "shadow-[0_0_20px_rgba(172,30,214,0.3)]"
+        )}
+      >
+        <BookOpen className="w-5 h-5 mr-2" />
+        <span className="font-semibold">Interview Q&A</span>
+        {isQAPanelOpen ? (
+          <ChevronDown className="w-5 h-5 ml-2" />
+        ) : (
+          <ChevronUp className="w-5 h-5 ml-2" />
+        )}
+      </Button>
+
+      {/* Collapsible Interview Q&A Panel */}
+      <AnimatePresence>
+        {isQAPanelOpen && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 z-30 h-[500px]"
+          >
+            <Card className="h-full border-t-2 border-white/10 bg-[#221f20] shadow-2xl rounded-t-3xl flex flex-col">
+              <CardHeader className="bg-gradient-to-r from-[#ac1ed6]/10 to-[#c26e73]/10 border-b border-white/10 shrink-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-white text-xl">
+                      <BookOpen className="w-5 h-5 text-[#ac1ed6]" />
+                      Interview Q&A
+                    </CardTitle>
+                    <CardDescription className="text-white/60">
+                      Master the fundamentals with curated Q&A
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsQAPanelOpen(false)}
+                    className="text-white/60 hover:text-white hover:bg-white/10"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0 flex-1 overflow-hidden">
+                <ScrollArea className="h-full">
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {Object.entries(LEARNING_CONTENT).map(([key, section]) => (
+                        <div key={key} className="space-y-3">
+                          <div className="flex items-center gap-2 text-white/80 font-semibold">
+                            {section.icon}
+                            {section.title}
+                          </div>
+                          <Accordion type="single" collapsible className="w-full">
+                            {section.questions.map((item, index) => (
+                              <AccordionItem key={index} value={`${key}-${index}`} className="border-white/10">
+                                <AccordionTrigger className="text-white/70 hover:text-white text-sm text-left">
+                                  {item.q}
+                                </AccordionTrigger>
+                                <AccordionContent className="text-white/50 text-sm leading-relaxed">
+                                  {item.a}
+                                </AccordionContent>
+                              </AccordionItem>
+                            ))}
+                          </Accordion>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

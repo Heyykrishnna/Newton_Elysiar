@@ -30,6 +30,7 @@ export function WebDevPlayground() {
 
   // Current State
   const [activeFile, setActiveFile] = useState<string | null>('/index.html');
+  const [openFiles, setOpenFiles] = useState<string[]>(['/index.html']); // Multi-tab state
   const [activeFileContent, setActiveFileContent] = useState(''); // Buffer for editor
   const [previewFile, setPreviewFile] = useState<string>('/index.html');
   
@@ -65,6 +66,9 @@ export function WebDevPlayground() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const ADMIN_PASSWORD = 'ingypNDmjHOtz1oFHxhHUc2Zh';
+  
+  // Drag and Drop State
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
   
   // Resizable panel widths
   const [editorWidth, setEditorWidth] = useState(50); // percentage
@@ -292,9 +296,12 @@ root.render(<App />);`
                  }
              }));
              setActiveFile('/App.jsx');
+             if (!openFiles.includes('/App.jsx')) setOpenFiles(prev => [...prev, '/App.jsx']);
              toast.success("React boilerplate generated!");
         } else {
-             setActiveFile(fs.files['/App.jsx'] ? '/App.jsx' : '/App.tsx');
+             const target = fs.files['/App.jsx'] ? '/App.jsx' : '/App.tsx';
+             setActiveFile(target);
+             if (!openFiles.includes(target)) setOpenFiles(prev => [...prev, target]);
         }
     } else if (mode === 'web') {
         // Ensure web defaults exist
@@ -384,6 +391,7 @@ document.getElementById('btn').addEventListener('click', () => {
             toast.success("Web environment initialized!");
         }
         setActiveFile('/index.html');
+        if (!openFiles.includes('/index.html')) setOpenFiles(prev => [...prev, '/index.html']);
     }
   };
 
@@ -450,6 +458,7 @@ document.getElementById('btn').addEventListener('click', () => {
         }
     }));
     setActiveFile(path);
+    setOpenFiles(prev => [...prev, path]);
     setNewFileName('');
     setShowNewFileDialog(false);
     toast.success(`File ${path} created`);
@@ -473,6 +482,32 @@ document.getElementById('btn').addEventListener('click', () => {
     }
     
     toast.success(`File ${path} deleted`);
+  };
+
+  const handleFileClick = (path: string) => {
+      setActiveFile(path);
+      if (!openFiles.includes(path)) {
+          setOpenFiles(prev => [...prev, path]);
+      }
+  };
+
+  const handleCloseTab = (e: React.MouseEvent, path: string) => {
+      e.stopPropagation();
+      
+      const newOpenFiles = openFiles.filter(f => f !== path);
+      setOpenFiles(newOpenFiles);
+      
+      if (activeFile === path) {
+          if (newOpenFiles.length > 0) {
+              // Try to find index of closed file
+              const idx = openFiles.indexOf(path);
+              // Open previous file if possible, or next (which is now at idx)
+              const nextFile = newOpenFiles[Math.max(0, idx - 1)]; 
+              setActiveFile(nextFile);
+          } else {
+              setActiveFile(null);
+          }
+      }
   };
 
   const checkAnalysisLimit = () => {
@@ -832,14 +867,14 @@ document.getElementById('btn').addEventListener('click', () => {
            <div className="flex flex-1 overflow-hidden">
                 {/* File Tree Sidebar */}
                 <div 
-                    className={`bg-[#161616] border-r border-white/5 flex flex-col transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-12'}`}
+                    className={`bg-[#161616] border-r hover:text-black border-white/5 flex flex-col transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-12'}`}
                 >
                     <div className={cn("p-3 border-b border-white/5 flex items-center shrink-0", isSidebarOpen ? "justify-between" : "justify-center")}>
                         {isSidebarOpen && <span className="text-white/60 text-xs font-medium uppercase tracking-wider">Explorer</span>}
                         <Button
                             variant="ghost" 
                             size="icon"
-                            className="h-6 w-6 text-white/60 hover:text-white"
+                            className="h-6 w-6 text-white/60 hover:text-black"
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                             title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
                         >
@@ -853,7 +888,7 @@ document.getElementById('btn').addEventListener('click', () => {
                                  <Button
                                     variant="ghost" 
                                     size="icon"
-                                    className="h-6 w-6 text-white/60 hover:text-white"
+                                    className="h-6 w-6 text-white/60 hover:text-black"
                                     onClick={() => setShowNewFileDialog(true)}
                                     title="New File"
                                  >
@@ -864,7 +899,7 @@ document.getElementById('btn').addEventListener('click', () => {
                                 fs={fs} 
                                 currentPath={currentDir}
                                 activeFile={activeFile}
-                                onFileSelect={setActiveFile}
+                                onFileSelect={handleFileClick}
                                 onDelete={handleDeleteFile}
                                 className="flex-1"
                             />
@@ -873,22 +908,62 @@ document.getElementById('btn').addEventListener('click', () => {
                 </div>
 
                 {/* Editor Area */}
-                <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
-                    {/* Active File Tab Bar (Simplified) */}
-                     {activeFile && (
-                         <div className="flex bg-[#1a1a1a] border-b border-white/10 overflow-x-auto">
-                            <div className="flex items-center gap-2 px-4 py-2 bg-[#1e1e1e] border-t-2 border-[#ac1ed6] text-white text-sm">
-                                <FileCode className="w-3.5 h-3.5 text-[#ac1ed6]" />
-                                <span>{activeFile.split('/').pop()}</span>
+                <div 
+                    className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e] relative"
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDraggingOver(true);
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault();
+                        setIsDraggingOver(false);
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDraggingOver(false);
+                        const filePath = e.dataTransfer.getData('application/file-path');
+                        if (filePath && fs.files[filePath]) {
+                            handleFileClick(filePath);
+                            toast.success(`Opened ${filePath}`);
+                        }
+                    }}
+                >
+                    {/* Drop Zone Overlay */}
+                    {isDraggingOver && (
+                        <div className="absolute inset-0 z-50 bg-[#ac1ed6]/10 border-2 border-[#ac1ed6] border-dashed rounded-lg flex items-center justify-center backdrop-blur-[1px]">
+                            <div className="bg-[#1e1e1e] px-4 py-2 rounded-lg border border-[#ac1ed6]/50 shadow-xl flex items-center gap-2 text-[#ac1ed6]">
+                                <FileCode className="w-5 h-5" />
+                                <span className="font-medium">Drop to open</span>
+                            </div>
+                        </div>
+                    )}
+                    {/* Active File Tab Bar */}
+                     <div className="flex bg-[#1a1a1a] border-b border-white/10 overflow-x-auto scrolbar-hide">
+                        {openFiles.map(file => (
+                            <div 
+                                key={file}
+                                onClick={() => setActiveFile(file)}
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 text-sm cursor-pointer border-r border-white/5 min-w-[120px] max-w-[200px] group select-none transition-colors",
+                                    activeFile === file 
+                                        ? "bg-[#1e1e1e] border-t-2 border-t-[#ac1ed6] text-white" 
+                                        : "bg-[#1a1a1a] border-t-2 border-t-transparent text-white/50 hover:bg-[#1e1e1e]/50 hover:text-white/80"
+                                )}
+                            >
+                                <FileCode className={cn("w-3.5 h-3.5", activeFile === file ? "text-[#ac1ed6]" : "text-white/40")} />
+                                <span className="truncate flex-1">{file.split('/').pop()}</span>
                                 <button 
-                                    onClick={(e) => { e.stopPropagation(); setActiveFile(null); }}
-                                    className="ml-2 text-white/40 hover:text-white"
+                                    onClick={(e) => handleCloseTab(e, file)}
+                                    className={cn(
+                                        "ml-1 p-0.5 rounded-sm hover:bg-white/20 transition-colors opacity-0 group-hover:opacity-100",
+                                        activeFile === file ? "text-white/60 hover:text-white opacity-100" : "text-white/40 hover:text-white/80"
+                                    )}
                                 >
                                     <X className="w-3 h-3" />
                                 </button>
                             </div>
-                         </div>
-                     )}
+                        ))}
+                     </div>
 
                      <div className="flex-1 relative">
                         {activeFile ? (
@@ -912,7 +987,7 @@ document.getElementById('btn').addEventListener('click', () => {
                                     }));
                                 }}
                                 options={{
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
                                     minimap: { enabled: false },
                                     automaticLayout: true,
@@ -1146,7 +1221,7 @@ document.getElementById('btn').addEventListener('click', () => {
                                         options={{
                                             readOnly: true,
                                             minimap: { enabled: false },
-                                            fontSize: 14,
+                                            fontSize: 12,
                                             fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
                                         }}
                                     />

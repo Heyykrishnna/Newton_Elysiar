@@ -72,6 +72,11 @@ const FileTreeNode: React.FC<FileTreeNodeProps> = ({ fs, path, activeFile, onFil
                  return (
                      <div 
                         key={filePath}
+                        draggable
+                        onDragStart={(e) => {
+                            e.dataTransfer.setData('application/file-path', filePath);
+                            e.dataTransfer.effectAllowed = 'copy';
+                        }}
                         onClick={() => onFileSelect(filePath)}
                         className={cn(
                             "flex items-center gap-2 py-1.5 pr-2 cursor-pointer text-sm transition-colors group relative",

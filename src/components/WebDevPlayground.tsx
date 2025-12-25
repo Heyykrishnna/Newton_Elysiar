@@ -108,11 +108,22 @@ export function WebDevPlayground() {
             const styles = cssFiles.map(f => `<style>${f.content}</style>`).join('\n');
             const userScript = `
                 <script type="text/babel" data-presets="env,react">
-                    try {
-                        ${jsContent}
-                    } catch (err) {
-                        console.error(err);
-                    }
+                    // Wait for DOM to be ready before executing React code
+                    (function() {
+                        function initReactApp() {
+                            try {
+                                ${jsContent}
+                            } catch (err) {
+                                console.error(err);
+                            }
+                        }
+                        
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', initReactApp);
+                        } else {
+                            initReactApp();
+                        }
+                    })();
                 </script>
             `;
             const errorDiv = `<div id="error-container" style="display:none; color: red; background: #ffe6e6; padding: 1rem; border: 1px solid red; margin: 1rem; border-radius: 8px; font-family: monospace;"></div>`;

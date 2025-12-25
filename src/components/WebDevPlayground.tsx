@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { FileSystemState, INITIAL_FS_STATE, resolvePath, normalizePath, isValidFileName } from '@/utils/fileSystem';
 import { FileTree } from './FileTree';
+import { PlaygroundSettings, SettingsButton } from './PlaygroundSettings';
 
 
 
@@ -83,6 +84,34 @@ export function WebDevPlayground() {
 
   // Console states
   const [consoleOutput, setConsoleOutput] = useState<Array<{type: 'log' | 'error' | 'warn', message: string}>>([]);
+
+  // Settings States
+  const [showSettings, setShowSettings] = useState(false);
+  const [fontSize, setFontSize] = useState(14);
+  const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('webdev_playground_settings');
+    if (savedSettings) {
+      const { fontSize: savedFontSize, theme: savedTheme } = JSON.parse(savedSettings);
+      setFontSize(savedFontSize || 14);
+      setTheme(savedTheme || 'vs-dark');
+    }
+  }, []);
+
+  // Save settings to localStorage
+  const handleFontSizeChange = (size: number) => {
+    setFontSize(size);
+    const settings = { fontSize: size, theme };
+    localStorage.setItem('webdev_playground_settings', JSON.stringify(settings));
+  };
+
+  const handleThemeChange = (newTheme: 'vs-dark' | 'light') => {
+    setTheme(newTheme);
+    const settings = { fontSize, theme: newTheme };
+    localStorage.setItem('webdev_playground_settings', JSON.stringify(settings));
+  };
 
   // Update preview
   useEffect(() => {
@@ -895,16 +924,17 @@ document.getElementById('btn').addEventListener('click', () => {
                     
                     {isSidebarOpen && (
                         <>
-                            <div className="px-3 py-2 flex justify-end">
-                                 <Button
-                                    variant="ghost" 
-                                    size="icon"
-                                    className="h-6 w-6 text-white/60 hover:text-black"
-                                    onClick={() => setShowNewFileDialog(true)}
-                                    title="New File"
-                                 >
+                            <div className="px-3 py-2 flex items-center justify-between gap-2">
+                                <Button
+                                   variant="ghost" 
+                                   size="icon"
+                                   className="h-6 w-6 text-white/60 hover:text-black"
+                                   onClick={() => setShowNewFileDialog(true)}
+                                   title="New File"
+                                >
                                     <Plus className="w-3.5 h-3.5" />
-                                 </Button>
+                                </Button>
+                                <SettingsButton onClick={() => setShowSettings(true)} />
                             </div>
                             <FileTree 
                                 fs={fs} 
@@ -981,7 +1011,7 @@ document.getElementById('btn').addEventListener('click', () => {
                             <Editor
                                 height="100%"
                                 language={fs.files[activeFile]?.language || 'plaintext'}
-                                theme="vs-dark"
+                                theme={theme}
                                 value={activeFileContent}
                                 onChange={(value) => {
                                     const newContent = value || '';
@@ -998,7 +1028,7 @@ document.getElementById('btn').addEventListener('click', () => {
                                     }));
                                 }}
                                 options={{
-                                    fontSize: 12,
+                                    fontSize: fontSize,
                                     fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
                                     minimap: { enabled: false },
                                     automaticLayout: true,
@@ -1294,6 +1324,16 @@ document.getElementById('btn').addEventListener('click', () => {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
+
+        {/* Playground Settings */}
+        <PlaygroundSettings
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            fontSize={fontSize}
+            theme={theme}
+            onFontSizeChange={handleFontSizeChange}
+            onThemeChange={handleThemeChange}
+        />
 
     </motion.div>
   );

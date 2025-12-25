@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { CodeAnalyzer } from './CodeAnalyzer';
+import { PlaygroundSettings, SettingsButton } from './PlaygroundSettings';
 
 const DEFAULT_PYTHON_CODE = `# Write your Python solution here
 def solution():
@@ -39,6 +40,34 @@ export function CodePlayground() {
   const [customInput, setCustomInput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+
+  // Settings States
+  const [showSettings, setShowSettings] = useState(false);
+  const [fontSize, setFontSize] = useState(14);
+  const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('code_playground_settings');
+    if (savedSettings) {
+      const { fontSize: savedFontSize, theme: savedTheme } = JSON.parse(savedSettings);
+      setFontSize(savedFontSize || 14);
+      setTheme(savedTheme || 'vs-dark');
+    }
+  }, []);
+
+  // Save settings to localStorage
+  const handleFontSizeChange = (size: number) => {
+    setFontSize(size);
+    const settings = { fontSize: size, theme };
+    localStorage.setItem('code_playground_settings', JSON.stringify(settings));
+  };
+
+  const handleThemeChange = (newTheme: 'vs-dark' | 'light') => {
+    setTheme(newTheme);
+    const settings = { fontSize, theme: newTheme };
+    localStorage.setItem('code_playground_settings', JSON.stringify(settings));
+  };
 
   // AI Analyzer States
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -297,6 +326,7 @@ export function CodePlayground() {
                         <Brain className="w-4 h-4 mr-1" />
                         Visualize
                     </Button>
+                    <SettingsButton onClick={() => setShowSettings(true)} />
                     <Button
                         size="sm"
                         onClick={executeCode}
@@ -317,11 +347,11 @@ export function CodePlayground() {
                     <Editor
                         height="100%"
                         language={selectedLanguage}
-                        theme="vs-dark"
+                        theme={theme}
                         value={code}
                         onChange={(value) => setCode(value || '')}
                         options={{
-                            fontSize: 12,
+                            fontSize: fontSize,
                             fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
                             minimap: { enabled: false },
                             scrollBeyondLastLine: false,
@@ -559,6 +589,16 @@ export function CodePlayground() {
             language={selectedLanguage}
             isOpen={showCodeAnalyzer}
             onClose={() => setShowCodeAnalyzer(false)}
+        />
+
+        {/* Playground Settings */}
+        <PlaygroundSettings
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            fontSize={fontSize}
+            theme={theme}
+            onFontSizeChange={handleFontSizeChange}
+            onThemeChange={handleThemeChange}
         />
     </>
   );

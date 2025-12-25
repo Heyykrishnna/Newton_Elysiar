@@ -156,7 +156,7 @@ export function SettingsButton({ onClick }: { onClick: () => void }) {
       size="sm"
       variant="outline"
       onClick={onClick}
-      className="border-white/20 text-white/60 hover:text-white hover:bg-white/10 hover:border-[#ac1ed6]/50"
+      className="border-[#ac1ed6]/50 bg-gradient-to-r from-[#ac1ed6]/10 to-[#c26e73]/10 text-black hover:bg-transparent hover:text-white hover:border-[#ac1ed6]"
     >
       <Settings className="w-4 h-4 mr-1" />
       Settings

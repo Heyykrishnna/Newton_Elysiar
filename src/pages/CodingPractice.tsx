@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Code2, TrendingUp, Target, Sparkles, RefreshCw, ExternalLink, Brain, Award, Key, Lock, Trophy, Swords, Users, Save } from 'lucide-react';
 import { useCodingProfile, useCodingProgress, useUpsertCodingProfile, useSyncCodingProgress, useGetCodingRecommendations } from '@/hooks/useCodingProfile';
@@ -20,6 +20,7 @@ import { CodingContests } from '@/components/CodingContests';
 import { CodePlayground } from '@/components/CodePlayground';
 import { WebDevPractice } from '@/components/WebDevPractice';
 import { Layout as LayoutIcon } from 'lucide-react';
+import { SlidingTabNavigation } from '@/components/SlidingTabNavigation';
 
 export default function CodingPractice() {
   const [editMode, setEditMode] = useState(false);
@@ -32,6 +33,7 @@ export default function CodingPractice() {
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
   const [recommendations, setRecommendations] = useState('');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   // Password protection states
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -295,37 +297,20 @@ export default function CodingPractice() {
               `}</style>
           </div>
 
-          <Tabs defaultValue="dashboard" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7 h-14 p-1 bg-[#221f20] border border-white/10 rounded-xl">
-              <TabsTrigger value="dashboard" className="text-white/60 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ac1ed6] data-[state=active]:to-[#c26e73] data-[state=active]:text-white rounded-lg text-xs md:text-sm">
-                <Target className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden md:inline">Dashboard</span>
-              </TabsTrigger>
-              <TabsTrigger value="playground" className="text-white/60 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ac1ed6] data-[state=active]:to-[#c26e73] data-[state=active]:text-white rounded-lg text-xs md:text-sm">
-                <Code2 className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden md:inline">Playground</span>
-              </TabsTrigger>
-              <TabsTrigger value="webdev" className="text-white/60 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ac1ed6] data-[state=active]:to-[#c26e73] data-[state=active]:text-white rounded-lg text-xs md:text-sm">
-                <LayoutIcon className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden md:inline">Web Dev</span>
-              </TabsTrigger>
-              <TabsTrigger value="setup" className="text-white/60 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ac1ed6] data-[state=active]:to-[#c26e73] data-[state=active]:text-white rounded-lg text-xs md:text-sm">
-                <Key className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden md:inline">Setup</span>
-              </TabsTrigger>
-              <TabsTrigger value="achievements" className="text-white/60 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ac1ed6] data-[state=active]:to-[#c26e73] data-[state=active]:text-white rounded-lg text-xs md:text-sm">
-                <Trophy className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden md:inline">Badges</span>
-              </TabsTrigger>
-              <TabsTrigger value="contests" className="text-white/60 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ac1ed6] data-[state=active]:to-[#c26e73] data-[state=active]:text-white rounded-lg text-xs md:text-sm">
-                <Swords className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden md:inline">Contests</span>
-              </TabsTrigger>
-              <TabsTrigger value="recommendations" className="text-white/60 font-semibold data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#ac1ed6] data-[state=active]:to-[#c26e73] data-[state=active]:text-white rounded-lg text-xs md:text-sm">
-                <Sparkles className="w-4 h-4 mr-1 md:mr-2" />
-                <span className="hidden md:inline">AI</span>
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <SlidingTabNavigation
+              tabs={[
+                { id: 'dashboard', label: 'Dashboard', icon: <Target className="w-4 h-4" /> },
+                { id: 'playground', label: 'Playground', icon: <Code2 className="w-4 h-4" /> },
+                { id: 'webdev', label: 'Web Dev', icon: <LayoutIcon className="w-4 h-4" /> },
+                { id: 'setup', label: 'Setup', icon: <Key className="w-4 h-4" /> },
+                { id: 'achievements', label: 'Badges', icon: <Trophy className="w-4 h-4" /> },
+                { id: 'contests', label: 'Contests', icon: <Swords className="w-4 h-4" /> },
+                { id: 'recommendations', label: 'AI', icon: <Sparkles className="w-4 h-4" /> },
+              ]}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+            />
 
             <TabsContent value="dashboard" className="space-y-6 mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

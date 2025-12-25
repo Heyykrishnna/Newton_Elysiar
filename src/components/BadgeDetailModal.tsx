@@ -69,7 +69,7 @@ export function BadgeDetailModal({
 
               {/* Icon */}
               <motion.div
-                className="text-9xl mb-4 relative z-10"
+                className="mb-4 relative z-10 flex items-center justify-center"
                 animate={{
                   scale: [1, 1.05, 1],
                   rotate: [0, 5, -5, 0],
@@ -80,7 +80,15 @@ export function BadgeDetailModal({
                   ease: 'easeInOut',
                 }}
               >
-                {achievement.icon}
+                {achievement.badgeImage ? (
+                  <img 
+                    src={achievement.badgeImage} 
+                    alt={achievement.name}
+                    className="w-36 h-36 object-contain drop-shadow-2xl"
+                  />
+                ) : (
+                  <div className="text-9xl">{achievement.icon}</div>
+                )}
               </motion.div>
 
               {/* Name and Description */}
@@ -169,7 +177,7 @@ export function BadgeDetailModal({
               onClick={onClose}
               variant="outline"
               className={cn(
-                "border-white/20 text-black hover:bg-white/10 hover:text-white",
+                "border-white/20 text-white hover:bg-white/10",
                 !isUnlocked && "flex-1"
               )}
             >

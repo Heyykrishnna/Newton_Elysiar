@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCodingAchievements, CODING_ACHIEVEMENTS, useUnlockAchievement, AchievementMetadata, CodingAchievement, RARITY_CONFIG } from '@/hooks/useCodingAchievements';
 import { useCodingProgress } from '@/hooks/useCodingProfile';
-import { Trophy, Lock, Sparkles, Search, Filter } from 'lucide-react';
+import { Trophy, Lock, Sparkles, Search, Filter, Highlighter, UserStar } from 'lucide-react';
 import { BadgeCard } from '@/components/BadgeCard';
 import { BadgeDetailModal } from '@/components/BadgeDetailModal';
 import { BadgeShareDialog } from '@/components/BadgeShareDialog';
@@ -127,33 +127,35 @@ export function CodingAchievements() {
     <div className="space-y-6">
       {/* Enhanced Stats Summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="border border-white/10 bg-gradient-to-br from-yellow-500/20 to-orange-500/10">
+        <Card className="border border-white/10 bg-gradient-to-br from-yellow-500 to-orange-500">
           <CardContent className="pt-4 text-center">
-            <Trophy className="w-8 h-8 mx-auto text-yellow-500 mb-2" />
+            <Trophy className="w-8 h-8 mx-auto text-white mb-2" />
             <div className="text-2xl font-bold text-white">{unlockedAchievements.length}</div>
             <div className="text-xs text-white/60">Unlocked</div>
           </CardContent>
         </Card>
-        <Card className="border border-white/10 bg-gradient-to-br from-[#ac1ed6]/20 to-[#c26e73]/10">
+        <Card className="border border-white/10 bg-gradient-to-br from-[#ac1ed6] to-[#c26e73]">
           <CardContent className="pt-4 text-center">
-            <Sparkles className="w-8 h-8 mx-auto text-[#ac1ed6] mb-2" />
+            <Sparkles className="w-8 h-8 mx-auto text-white mb-2" />
             <div className="text-2xl font-bold text-white">{totalPoints}</div>
             <div className="text-xs text-white/60">Total Points</div>
           </CardContent>
         </Card>
-        <Card className="border border-white/10 bg-gradient-to-br from-blue-500/20 to-cyan-500/10">
+        <Card className="border border-white/10 bg-gradient-to-br from-blue-500 to-cyan-500">
           <CardContent className="pt-4 text-center">
-            <div className="text-2xl font-bold text-[#ac1ed6]">{totalProblems}</div>
+            <Highlighter className="w-8 h-8 mx-auto text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{totalProblems}</div>
             <div className="text-xs text-white/60">Total Solved</div>
           </CardContent>
         </Card>
-        <Card className="border border-white/10 bg-gradient-to-br from-orange-500/20 to-red-500/10">
+        <Card className="border border-white/10 bg-gradient-to-br from-orange-500 to-red-500">
           <CardContent className="pt-4 text-center">
-            <div className="text-2xl font-bold text-orange-500">{maxRating || 'N/A'}</div>
+            <UserStar className="w-8 h-8 mx-auto text-white mb-2" />
+            <div className="text-2xl font-bold text-white">{maxRating || 'N/A'}</div>
             <div className="text-xs text-white/60">Max Rating</div>
           </CardContent>
         </Card>
-        <Card className="border border-white/10 bg-gradient-to-br from-gray-500/20 to-gray-700/10">
+        <Card className="border border-white/10 bg-gradient-to-br from-gray-500 to-gray-700">
           <CardContent className="pt-4 text-center">
             <Lock className="w-8 h-8 mx-auto text-white/40 mb-2" />
             <div className="text-2xl font-bold text-white">{lockedAchievements.length + claimableAchievements.length}</div>

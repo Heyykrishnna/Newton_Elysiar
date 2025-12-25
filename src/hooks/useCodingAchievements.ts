@@ -20,6 +20,7 @@ export interface AchievementMetadata {
   name: string;
   description: string;
   icon: string;
+  badgeImage?: string; // Path to custom badge image
   threshold: number;
   type?: string;
   rarity: AchievementRarity;
@@ -45,7 +46,8 @@ export const CODING_ACHIEVEMENTS: AchievementMetadata[] = [
     id: 'problems_10', 
     name: 'First Steps', 
     description: 'Solve 10 problems', 
-    icon: '🎯', 
+    icon: '🎯',
+    badgeImage: '/badges/first_steps.png', 
     threshold: 10,
     rarity: 'common',
     category: 'progress',
@@ -56,7 +58,8 @@ export const CODING_ACHIEVEMENTS: AchievementMetadata[] = [
     id: 'problems_50', 
     name: 'Problem Solver', 
     description: 'Solve 50 problems', 
-    icon: '💪', 
+    icon: '💪',
+    badgeImage: '/badges/problem_solver.png', 
     threshold: 50,
     rarity: 'common',
     category: 'progress',
@@ -69,7 +72,8 @@ export const CODING_ACHIEVEMENTS: AchievementMetadata[] = [
     id: 'problems_100', 
     name: 'Century Club', 
     description: 'Solve 100 problems', 
-    icon: '💯', 
+    icon: '💯',
+    badgeImage: '/badges/century_club.png', 
     threshold: 100,
     rarity: 'rare',
     category: 'progress',
@@ -80,7 +84,8 @@ export const CODING_ACHIEVEMENTS: AchievementMetadata[] = [
     id: 'problems_250', 
     name: 'Dedicated Coder', 
     description: 'Solve 250 problems', 
-    icon: '🔥', 
+    icon: '🔥',
+    badgeImage: '/badges/dedicated_coder.png', 
     threshold: 250,
     rarity: 'rare',
     category: 'progress',
@@ -93,7 +98,8 @@ export const CODING_ACHIEVEMENTS: AchievementMetadata[] = [
     id: 'problems_500', 
     name: 'Half Millennium', 
     description: 'Solve 500 problems', 
-    icon: '⭐', 
+    icon: '⭐',
+    badgeImage: '/badges/half_millennium.png', 
     threshold: 500,
     rarity: 'epic',
     category: 'progress',
@@ -106,7 +112,8 @@ export const CODING_ACHIEVEMENTS: AchievementMetadata[] = [
     id: 'problems_1000', 
     name: 'Legendary', 
     description: 'Solve 1000 problems', 
-    icon: '👑', 
+    icon: '👑',
+    badgeImage: '/badges/legendary.png', 
     threshold: 1000,
     rarity: 'legendary',
     category: 'progress',

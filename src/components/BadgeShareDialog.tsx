@@ -87,9 +87,18 @@ export function BadgeShareDialog({
     ctx.textAlign = 'center';
     ctx.fillText('Achievement Unlocked', canvas.width / 2, 150);
 
-    // Icon (emoji as text)
-    ctx.font = '120px Arial';
-    ctx.fillText(achievement.icon, canvas.width / 2, 280);
+    // Icon (emoji or badge image)
+    if (achievement.badgeImage) {
+      const badgeImg = new Image();
+      badgeImg.crossOrigin = 'anonymous';
+      badgeImg.onload = () => {
+        ctx.drawImage(badgeImg, canvas.width / 2 - 60, 200, 120, 120);
+      };
+      badgeImg.src = achievement.badgeImage;
+    } else {
+      ctx.font = '120px Arial';
+      ctx.fillText(achievement.icon, canvas.width / 2, 280);
+    }
 
     // Achievement name
     ctx.fillStyle = achievement.colors.primary;
@@ -212,7 +221,7 @@ export function BadgeShareDialog({
               <Button
                 onClick={copyShareLink}
                 variant="outline"
-                className="border-white/20 text-black hover:bg-white/10 hover:text-white"
+                className="border-white/20 text-white hover:bg-white/10"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               </Button>
@@ -256,7 +265,7 @@ export function BadgeShareDialog({
           <Button
             onClick={onClose}
             variant="outline"
-            className="w-full border-white/20 text-black hover:bg-white/10 hover:text-white"
+            className="w-full border-white/20 text-white hover:bg-white/10"
           >
             Close
           </Button>

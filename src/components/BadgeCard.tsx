@@ -122,14 +122,29 @@ export function BadgeCard({
               />
             )}
             
-            <div
-              className={cn(
-                "text-6xl relative z-10 transition-all duration-300",
-                !isUnlocked && !isClaimable && "grayscale opacity-50"
-              )}
-            >
-              {achievement.icon}
-            </div>
+            {achievement.badgeImage ? (
+              <div
+                className={cn(
+                  "relative z-10 transition-all duration-300 w-24 h-24 flex items-center justify-center",
+                  !isUnlocked && !isClaimable && "grayscale opacity-50"
+                )}
+              >
+                <img 
+                  src={achievement.badgeImage} 
+                  alt={achievement.name}
+                  className="w-full h-full object-contain drop-shadow-2xl"
+                />
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "text-6xl relative z-10 transition-all duration-300",
+                  !isUnlocked && !isClaimable && "grayscale opacity-50"
+                )}
+              >
+                {achievement.icon}
+              </div>
+            )}
 
             {/* Lock overlay for locked achievements */}
             {!isUnlocked && !isClaimable && (

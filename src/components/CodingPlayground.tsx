@@ -466,7 +466,7 @@ export function CodingPlayground({ contest, onClose }: CodingPlaygroundProps) {
                   value={code}
                   onChange={(value) => setCode(value || '')}
                   options={{
-                    fontSize: 14,
+                    fontSize: 12,
                     fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
                     minimap: { enabled: false },
                     scrollBeyondLastLine: false,

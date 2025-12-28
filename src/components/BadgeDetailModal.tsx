@@ -177,7 +177,7 @@ export function BadgeDetailModal({
               onClick={onClose}
               variant="outline"
               className={cn(
-                "border-white/20 black hover:bg-white/10 hover:text-white",
+                "border-white/20 text-black hover:bg-white/10 hover:text-white",
                 !isUnlocked && "flex-1"
               )}
             >

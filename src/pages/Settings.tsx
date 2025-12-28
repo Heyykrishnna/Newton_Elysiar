@@ -116,12 +116,12 @@ const Settings = () => {
       icon: Edit3, 
       description: 'Personal information and credentials'
     },
-    { 
-      id: 'attendance', 
-      label: 'Attendance Analytics', 
-      icon: BarChart3, 
-      description: 'View your attendance performance'
-    },
+    // { 
+    //   id: 'attendance', 
+    //   label: 'Attendance Analytics', 
+    //   icon: BarChart3, 
+    //   description: 'View your attendance performance'
+    // },
     { 
       id: 'notifications', 
       label: 'Notifications', 

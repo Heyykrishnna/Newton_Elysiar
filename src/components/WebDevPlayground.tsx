@@ -1051,14 +1051,20 @@ document.getElementById('btn').addEventListener('click', () => {
 
         {/* Vertical Resize Handle */}
         <div
-          className="w-1 bg-white/5 hover:bg-[#ac1ed6] cursor-col-resize transition-colors relative group"
+          className={cn(
+            "w-4 -ml-2 hover:bg-white/5 cursor-col-resize transition-colors relative group z-10 flex items-center justify-center",
+            isResizing === 'editor' && "bg-white/10"
+          )}
           onMouseDown={() => setIsResizing('editor')}
         >
-          <div className="absolute inset-y-0 -left-1 -right-1" />
+           <div className={cn(
+             "w-1 h-8 rounded-full transition-colors",
+             isResizing === 'editor' ? "bg-[#ac1ed6]" : "bg-white/20 group-hover:bg-[#ac1ed6]"
+           )} />
         </div>
 
         {/* Right Side: Preview & Console/CLI */}
-        <div className="flex flex-col flex-1 right-panel">
+        <div className="flex flex-col flex-1 right-panel min-w-0">
           {playgroundMode !== 'cli' ? (
             <>
               {/* Live Preview */}
@@ -1090,28 +1096,37 @@ document.getElementById('btn').addEventListener('click', () => {
                     </Button>
                   </div>
                 </div>
-                <div className="flex-1 bg-white overflow-auto">
+                <div className="flex-1 bg-white overflow-hidden relative">
+                   {/* Overlay to catch events during resize */}
+                   {isResizing && <div className="absolute inset-0 z-50 bg-transparent" />}
+                   
                   <iframe
                     srcDoc={srcDoc}
                     title="preview"
                     sandbox="allow-scripts allow-modals"
                     width="100%"
                     height="100%"
-                    className="border-none"
+                    className={cn("border-none", isResizing && "pointer-events-none select-none")}
                   />
                 </div>
               </div>
 
               {/* Horizontal Resize Handle */}
               <div
-                className="h-1 bg-white/5 hover:bg-[#ac1ed6] cursor-row-resize transition-colors relative group"
+                className={cn(
+                  "h-4 -mt-2 hover:bg-white/5 cursor-row-resize transition-colors relative group z-10 flex items-center justify-center",
+                  isResizing === 'preview' && "bg-white/10"
+                )}
                 onMouseDown={() => setIsResizing('preview')}
               >
-                <div className="absolute inset-x-0 -top-1 -bottom-1" />
+                <div className={cn(
+                  "h-1 w-16 rounded-full transition-colors",
+                  isResizing === 'preview' ? "bg-[#ac1ed6]" : "bg-white/20 group-hover:bg-[#ac1ed6]"
+                )} />
               </div>
 
               {/* Console Output */}
-              <div className="flex flex-col bg-[#0d0d0d] flex-1">
+              <div className="flex flex-col bg-[#0d0d0d] flex-1 min-h-0">
                  <div className="px-4 py-2 border-b border-white/10 bg-[#1a1a1a] flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <Terminal className="w-4 h-4 text-white/60" />

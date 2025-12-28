@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface Tab {
@@ -15,7 +15,37 @@ interface SlidingTabNavigationProps {
 }
 
 export function SlidingTabNavigation({ tabs, activeTab, onTabChange, className }: SlidingTabNavigationProps) {
-  const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const tabsRef = useRef<(HTMLLabelElement | null)[]>([]);
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
+      const activeTabElement = tabsRef.current[activeIndex];
+
+      if (activeTabElement) {
+        setIndicatorStyle({
+          left: activeTabElement.offsetLeft,
+          width: activeTabElement.offsetWidth
+        });
+      }
+    };
+
+    updateIndicator();
+    
+    // Fallback window resize
+    window.addEventListener('resize', updateIndicator);
+    
+    // Also use ResizeObserver for more robust handling of content changes
+    const observer = new ResizeObserver(updateIndicator);
+    const container = tabsRef.current[0]?.parentElement;
+    if (container) observer.observe(container);
+
+    return () => {
+      window.removeEventListener('resize', updateIndicator);
+      observer.disconnect();
+    };
+  }, [activeTab, tabs]);
 
   return (
     <div className={cn("relative w-full", className)}>
@@ -31,6 +61,7 @@ export function SlidingTabNavigation({ tabs, activeTab, onTabChange, className }
               className="hidden"
             />
             <label
+              ref={el => { tabsRef.current[index] = el }}
               htmlFor={`tab-${tab.id}`}
               className={cn(
                 "relative cursor-pointer outline-none text-sm font-semibold px-4 py-3 flex-1 min-w-[90px] text-center transition-all duration-300 ease-out z-10 select-none flex items-center justify-center gap-2",
@@ -50,10 +81,10 @@ export function SlidingTabNavigation({ tabs, activeTab, onTabChange, className }
         <div
           className="absolute h-[calc(100%-8px)] rounded-lg bg-gradient-to-r from-[#ac1ed6] to-[#c26e73] transition-all duration-500 ease-[cubic-bezier(0.33,0.83,0.99,0.98)] shadow-lg shadow-purple-500/30"
           style={{
-            width: `calc(${100 / tabs.length}% - 4px)`,
-            transform: `translateX(calc(${activeIndex * 100}% + 2px))`,
+            width: indicatorStyle.width,
+            transform: `translateX(${indicatorStyle.left}px)`,
             top: '4px',
-            left: '2px',
+            left: 0,
             zIndex: 0,
           }}
         />
@@ -62,8 +93,9 @@ export function SlidingTabNavigation({ tabs, activeTab, onTabChange, className }
         <div
           className="absolute top-0 h-1 bg-white/20 rounded-full transition-all duration-500 ease-[cubic-bezier(0.33,0.83,0.99,0.98)]"
           style={{
-            width: `${100 / tabs.length}%`,
-            transform: `translateX(${activeIndex * 100}%)`,
+            width: indicatorStyle.width,
+            transform: `translateX(${indicatorStyle.left}px)`,
+            left: 0,
           }}
         />
         
@@ -71,8 +103,9 @@ export function SlidingTabNavigation({ tabs, activeTab, onTabChange, className }
         <div
           className="absolute bottom-0 h-1 bg-white/20 rounded-full transition-all duration-500 ease-[cubic-bezier(0.33,0.83,0.99,0.98)]"
           style={{
-            width: `${100 / tabs.length}%`,
-            transform: `translateX(${activeIndex * 100}%)`,
+            width: indicatorStyle.width,
+            transform: `translateX(${indicatorStyle.left}px)`,
+            left: 0,
           }}
         />
       </div>

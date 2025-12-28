@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Layout, Monitor, Terminal, Maximize2, Minimize2, FileCode, Plus, Trash2, Code2, Sparkles, X, Info, CheckCircle2, Lightbulb, Lock, SidebarClose, SidebarOpen } from 'lucide-react';
+import { Layout, Monitor, Terminal, Maximize2, Minimize2, FileCode, Plus, Trash2, Code2, Sparkles, X, Info, CheckCircle2, Lightbulb, Lock, SidebarClose, SidebarOpen, RotateCcw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileSystemState, INITIAL_FS_STATE, resolvePath, normalizePath, isValidFileName } from '@/utils/fileSystem';
 import { FileTree } from './FileTree';
 import { PlaygroundSettings, SettingsButton } from './PlaygroundSettings';
-
-
-
 
 export function WebDevPlayground() {
   // File System State
@@ -52,8 +49,7 @@ export function WebDevPlayground() {
   // File Management States
   const [showNewFileDialog, setShowNewFileDialog] = useState(false);
   const [newFileName, setNewFileName] = useState('');
-
-
+  const [showResetDialog, setShowResetDialog] = useState(false); // Reset Dialog State
 
   // AI Analyzer States
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -111,6 +107,24 @@ export function WebDevPlayground() {
     setTheme(newTheme);
     const settings = { fontSize, theme: newTheme };
     localStorage.setItem('webdev_playground_settings', JSON.stringify(settings));
+  };
+
+  const handleReset = () => {
+    // Reset basic state
+    const resetFs = INITIAL_FS_STATE;
+    setFs(resetFs);
+    setActiveFile('/index.html');
+    setOpenFiles(['/index.html']);
+    setPreviewFile('/index.html');
+    setCliOutput(['Welcome to the Enhanced Terminal Simulator!', 'Type "help" to see available commands.', '']);
+    setCurrentDir('/');
+    setConsoleOutput([]);
+    setShowResetDialog(false);
+    
+    // Also clear localStorage
+    localStorage.setItem('webdev_playground_fs', JSON.stringify(resetFs));
+    
+    toast.success('Playground reset successfully!');
   };
 
   // Update preview
@@ -847,6 +861,17 @@ document.getElementById('btn').addEventListener('click', () => {
             <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => setShowResetDialog(true)}
+                className="text-white/40 hover:text-white hover:bg-white/10 mr-2"
+                title="Reset Playground"
+            >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Reset
+            </Button>
+
+            <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => handleDeleteFile(activeFile)}
                 className="text-red-400 hover:text-red-300 hover:bg-white/10 mr-2"
                 title="Delete Active File"
@@ -1199,6 +1224,30 @@ document.getElementById('btn').addEventListener('click', () => {
               />
               <DialogFooter>
                   <Button onClick={handleCreateFile} className="bg-[#ac1ed6] text-white">Create</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+      
+      {/* Reset Confirmation Dialog */}
+       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <DialogContent className="bg-[#1a1a1a] border-white/10">
+              <DialogHeader>
+                  <DialogTitle className="text-white flex items-center gap-2">
+                       <RotateCcw className="w-5 h-5 text-yellow-500" />
+                       Reset Playground?
+                  </DialogTitle>
+                  <DialogDescription className="text-white/60">
+                      This will completely reset your playground to its initial state. <br />
+                      <span className="text-red-400 font-semibold leading-relaxed">All your changes and files will be lost forever.</span> 
+                  </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex gap-2">
+                  <Button variant="ghost" onClick={() => setShowResetDialog(false)} className="text-white/60 hover:text-black">
+                      Cancel
+                  </Button>
+                  <Button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white">
+                      Yes, Reset
+                  </Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>

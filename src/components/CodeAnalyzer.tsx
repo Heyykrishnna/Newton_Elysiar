@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 interface CodeAnalyzerProps {
   code: string;
-  language: 'python' | 'javascript';
+  language: string; // Support all languages
   isOpen: boolean;
   onClose: () => void;
 }
@@ -142,7 +142,7 @@ export function CodeAnalyzer({ code, language, isOpen, onClose }: CodeAnalyzerPr
   };
 
   // Enhanced parse code into execution steps with support for nested structures, functions, and recursion
-  const parseExecutionSteps = (code: string, lang: 'python' | 'javascript'): ExecutionStep[] => {
+  const parseExecutionSteps = (code: string, lang: string): ExecutionStep[] => {
     const lines = code.split('\n');
     const steps: ExecutionStep[] = [];
     const globalVariables: Map<string, { name: string; value: string; type: string; scope: string }> = new Map();

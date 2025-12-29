@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Terminal, FileCode, RotateCcw, Code2, Info, Maximize2, Minimize2, Sparkles, Lock, CheckCircle2, AlertTriangle, Lightbulb, Brain } from 'lucide-react';
+import { Play, Terminal, FileCode, RotateCcw, Code2, Info, Maximize2, Minimize2, Sparkles, Lock, CheckCircle2, AlertTriangle, Lightbulb, Brain, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import Editor from '@monaco-editor/react';
@@ -11,7 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { CodeAnalyzer } from './CodeAnalyzer';
-import { PlaygroundSettings, SettingsButton } from './PlaygroundSettings';
+
+type SupportedLanguage = 'python' | 'javascript' | 'typescript' | 'rust' | 'swift' | 'cpp' | 'java' | 'go' | 'csharp' | 'ruby' | 'php' | 'kotlin';
 
 const DEFAULT_PYTHON_CODE = `# Write your Python solution here
 def solution():
@@ -33,41 +34,123 @@ function solution() {
 solution();
 `;
 
+const DEFAULT_TYPESCRIPT_CODE = `// Write your TypeScript solution here
+function solution(): void {
+    // Your code here
+    console.log("Hello from the Playground!");
+}
+
+// Test your solution
+solution();
+`;
+
+const DEFAULT_RUST_CODE = `// Write your Rust solution here
+fn main() {
+    println!("Hello from the Playground!");
+}
+`;
+
+const DEFAULT_SWIFT_CODE = `// Write your Swift solution here
+import Foundation
+
+func solution() {
+    print("Hello from the Playground!")
+}
+
+// Test your solution
+solution()
+`;
+
+const DEFAULT_CPP_CODE = `// Write your C++ solution here
+#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello from the Playground!" << endl;
+    return 0;
+}
+`;
+
+const DEFAULT_JAVA_CODE = `// Write your Java solution here
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello from the Playground!");
+    }
+}
+`;
+
+const DEFAULT_GO_CODE = `// Write your Go solution here
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from the Playground!")
+}
+`;
+
+const DEFAULT_CSHARP_CODE = `// Write your C# solution here
+using System;
+
+class Program {
+    static void Main() {
+        Console.WriteLine("Hello from the Playground!");
+    }
+}
+`;
+
+const DEFAULT_RUBY_CODE = `# Write your Ruby solution here
+def solution
+    puts "Hello from the Playground!"
+end
+
+# Test your solution
+solution
+`;
+
+const DEFAULT_PHP_CODE = `<?php
+// Write your PHP solution here
+function solution() {
+    echo "Hello from the Playground!\\n";
+}
+
+// Test your solution
+solution();
+?>
+`;
+
+const DEFAULT_KOTLIN_CODE = `// Write your Kotlin solution here
+fun main() {
+    println("Hello from the Playground!")
+}
+`;
+
+const DEFAULT_CODE_MAP: Record<SupportedLanguage, string> = {
+  python: DEFAULT_PYTHON_CODE,
+  javascript: DEFAULT_JAVASCRIPT_CODE,
+  typescript: DEFAULT_TYPESCRIPT_CODE,
+  rust: DEFAULT_RUST_CODE,
+  swift: DEFAULT_SWIFT_CODE,
+  cpp: DEFAULT_CPP_CODE,
+  java: DEFAULT_JAVA_CODE,
+  go: DEFAULT_GO_CODE,
+  csharp: DEFAULT_CSHARP_CODE,
+  ruby: DEFAULT_RUBY_CODE,
+  php: DEFAULT_PHP_CODE,
+  kotlin: DEFAULT_KOTLIN_CODE,
+};
+
 export function CodePlayground() {
-  const [selectedLanguage, setSelectedLanguage] = useState<'python' | 'javascript'>('python');
+  const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('python');
   const [code, setCode] = useState(DEFAULT_PYTHON_CODE);
-  const [output, setOutput] = useState<{ stdout: string; stderr: string } | null>(null);
+  const [output, setOutput] = useState<{ stdout: string; stderr: string; executionTime?: number } | null>(null);
   const [customInput, setCustomInput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-
-  // Settings States
-  const [showSettings, setShowSettings] = useState(false);
-  const [fontSize, setFontSize] = useState(14);
-  const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
-
-  // Load settings from localStorage
-  useEffect(() => {
-    const savedSettings = localStorage.getItem('code_playground_settings');
-    if (savedSettings) {
-      const { fontSize: savedFontSize, theme: savedTheme } = JSON.parse(savedSettings);
-      setFontSize(savedFontSize || 14);
-      setTheme(savedTheme || 'vs-dark');
-    }
-  }, []);
-
-  // Save settings to localStorage
-  const handleFontSizeChange = (size: number) => {
-    setFontSize(size);
-    const settings = { fontSize: size, theme };
-    localStorage.setItem('code_playground_settings', JSON.stringify(settings));
-  };
-
-  const handleThemeChange = (newTheme: 'vs-dark' | 'light') => {
-    setTheme(newTheme);
-    const settings = { fontSize, theme: newTheme };
-    localStorage.setItem('code_playground_settings', JSON.stringify(settings));
-  };
+  
+  // Resizable split pane state
+  const [splitPercentage, setSplitPercentage] = useState(45); // Editor takes 45% by default
+  const [isDragging, setIsDragging] = useState(false);
 
   // AI Analyzer States
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -188,11 +271,26 @@ export function CodePlayground() {
     setIsRunning(true);
     setOutput({ stdout: 'Running...', stderr: '' });
     
+    const startTime = performance.now();
+    
     try {
-      // Determine language configuration for Piston API
-      const languageConfig = selectedLanguage === 'python' 
-        ? { language: 'python', version: '3.10.0', fileName: 'main.py' }
-        : { language: 'javascript', version: '18.15.0', fileName: 'main.js' };
+      // Language configuration mapping for Piston API
+      const languageConfigs: Record<SupportedLanguage, { language: string; version: string; fileName: string }> = {
+        python: { language: 'python', version: '3.10.0', fileName: 'main.py' },
+        javascript: { language: 'javascript', version: '18.15.0', fileName: 'main.js' },
+        typescript: { language: 'typescript', version: '5.0.3', fileName: 'main.ts' },
+        rust: { language: 'rust', version: '1.68.2', fileName: 'main.rs' },
+        swift: { language: 'swift', version: '5.3.3', fileName: 'main.swift' },
+        cpp: { language: 'c++', version: '10.2.0', fileName: 'main.cpp' },
+        java: { language: 'java', version: '15.0.2', fileName: 'Main.java' },
+        go: { language: 'go', version: '1.16.2', fileName: 'main.go' },
+        csharp: { language: 'csharp', version: '6.12.0', fileName: 'main.cs' },
+        ruby: { language: 'ruby', version: '3.0.1', fileName: 'main.rb' },
+        php: { language: 'php', version: '8.2.3', fileName: 'main.php' },
+        kotlin: { language: 'kotlin', version: '1.8.20', fileName: 'main.kt' },
+      };
+
+      const languageConfig = languageConfigs[selectedLanguage];
       
       // Use Piston API for code execution
       const response = await fetch('https://emkc.org/api/v2/piston/execute', {
@@ -207,34 +305,40 @@ export function CodePlayground() {
       });
 
       const result = await response.json();
+      const endTime = performance.now();
+      const executionTime = Math.round(endTime - startTime);
       
       if (result.run) {
         setOutput({
           stdout: result.run.stdout || '',
-          stderr: result.run.stderr || ''
+          stderr: result.run.stderr || '',
+          executionTime
         });
         if (result.run.stderr) {
             toast.error('Execution finished with errors');
         } else {
-            toast.success('Execution successful');
+            toast.success(`Execution successful (${executionTime}ms)`);
         }
       } else {
-        setOutput({ stdout: '', stderr: 'Error executing code. Please try again.' });
+        setOutput({ stdout: '', stderr: 'Error executing code. Please try again.', executionTime });
         toast.error('Error executing code');
       }
     } catch (error) {
-      setOutput({ stdout: '', stderr: 'Error connecting to code execution service. Please try again.' });
+      const endTime = performance.now();
+      const executionTime = Math.round(endTime - startTime);
+      setOutput({ stdout: '', stderr: 'Error connecting to code execution service. Please try again.', executionTime });
       toast.error('Network error');
     }
     
     setIsRunning(false);
   }, [code, customInput, selectedLanguage]);
 
-  const handleLanguageChange = (lang: 'python' | 'javascript') => {
+  const handleLanguageChange = (lang: SupportedLanguage) => {
       setSelectedLanguage(lang);
-      const defaultCode = lang === 'python' ? DEFAULT_PYTHON_CODE : DEFAULT_JAVASCRIPT_CODE;
-      // Only reset if the code is empty or matches the other language's default
-      if (code === DEFAULT_PYTHON_CODE || code === DEFAULT_JAVASCRIPT_CODE || !code.trim()) {
+      const defaultCode = DEFAULT_CODE_MAP[lang];
+      // Only reset if the code is empty or matches any default template
+      const isDefaultCode = Object.values(DEFAULT_CODE_MAP).some(template => code === template);
+      if (isDefaultCode || !code.trim()) {
           setCode(defaultCode);
       }
   };
@@ -242,6 +346,53 @@ export function CodePlayground() {
   const toggleFullScreen = () => {
       setIsFullScreen(!isFullScreen);
   };
+
+  // Resizable split pane handlers
+  const handleMouseDown = () => {
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const container = document.querySelector('.playground-content-area');
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const newPercentage = isFullScreen 
+      ? ((e.clientX - rect.left) / rect.width) * 100
+      : ((e.clientY - rect.top) / rect.height) * 100;
+    
+    // Constrain between 20% and 80%
+    const constrainedPercentage = Math.min(Math.max(newPercentage, 20), 80);
+    setSplitPercentage(constrainedPercentage);
+  }, [isDragging, isFullScreen]);
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add/remove event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = isFullScreen ? 'ew-resize' : 'ns-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging, handleMouseMove, isFullScreen]);
 
   return (
     <>
@@ -270,7 +421,7 @@ export function CodePlayground() {
                     <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg border border-white/10">
                         <Info className="w-4 h-4 text-[#c26e73]" />
                         <span className="text-xs text-white/60">
-                            Python 3.10 • Node.js 18.15
+                            12 Languages Supported
                         </span>
                     </div>
                     <Button
@@ -297,18 +448,28 @@ export function CodePlayground() {
                     {/* Language Selector */}
                     <select
                         value={selectedLanguage}
-                        onChange={(e) => handleLanguageChange(e.target.value as 'python' | 'javascript')}
+                        onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
                         className="h-8 px-3 bg-[#0d0d0d] border border-white/20 rounded-md text-white text-sm hover:border-[#ac1ed6] focus:border-[#ac1ed6] focus:outline-none cursor-pointer transition-colors"
                     >
                         <option value="python">Python 3.10</option>
                         <option value="javascript">JavaScript (Node.js)</option>
+                        <option value="typescript">TypeScript 5.0</option>
+                        <option value="rust">Rust 1.68</option>
+                        <option value="swift">Swift 5.3</option>
+                        <option value="cpp">C++ (GCC 10.2)</option>
+                        <option value="java">Java 15</option>
+                        <option value="go">Go 1.16</option>
+                        <option value="csharp">C# (Mono 6.12)</option>
+                        <option value="ruby">Ruby 3.0</option>
+                        <option value="php">PHP 8.2</option>
+                        <option value="kotlin">Kotlin 1.8</option>
                     </select>
                     
                     <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                        const defaultCode = selectedLanguage === 'python' ? DEFAULT_PYTHON_CODE : DEFAULT_JAVASCRIPT_CODE;
+                        const defaultCode = DEFAULT_CODE_MAP[selectedLanguage];
                         setCode(defaultCode);
                         }}
                         className="border-white/20 hover:text-white text-black hover:bg-white/10"
@@ -326,7 +487,6 @@ export function CodePlayground() {
                         <Brain className="w-4 h-4 mr-1" />
                         Visualize
                     </Button>
-                    <SettingsButton onClick={() => setShowSettings(true)} />
                     <Button
                         size="sm"
                         onClick={executeCode}
@@ -340,18 +500,23 @@ export function CodePlayground() {
             </div>
 
             {/* Main Content Area - Split View */}
-            <div className={`flex-1 flex overflow-hidden ${isFullScreen ? 'flex-row' : 'flex-col'}`}>
+            <div className={`flex-1 flex overflow-hidden playground-content-area ${isFullScreen ? 'flex-row' : 'flex-col'}`}>
                 
                 {/* Code Editor Section */}
-                <div className={`flex-1 relative overflow-hidden ${isFullScreen ? 'border-r border-white/10' : 'border-b border-white/10'}`}>
+                <div 
+                    className="relative overflow-hidden"
+                    style={{
+                        [isFullScreen ? 'width' : 'height']: `${splitPercentage}%`
+                    }}
+                >
                     <Editor
                         height="100%"
                         language={selectedLanguage}
-                        theme={theme}
+                        theme="vs-dark"
                         value={code}
                         onChange={(value) => setCode(value || '')}
                         options={{
-                            fontSize: fontSize,
+                            fontSize: 14,
                             fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
                             minimap: { enabled: false },
                             scrollBeyondLastLine: false,
@@ -387,11 +552,31 @@ export function CodePlayground() {
                     />
                 </div>
 
+                {/* Resizable Divider */}
+                <div
+                    className={`
+                        bg-white/5 hover:bg-[#ac1ed6]/30 transition-colors cursor-${isFullScreen ? 'ew' : 'ns'}-resize
+                        ${isFullScreen ? 'w-1 hover:w-1.5' : 'h-1 hover:h-1.5'}
+                        ${isDragging ? 'bg-[#ac1ed6]/50' : ''}
+                        relative group
+                    `}
+                    onMouseDown={handleMouseDown}
+                >
+                    {/* Drag Handle Indicator */}
+                    <div className={`
+                        absolute ${isFullScreen ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' : 'left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'}
+                        ${isFullScreen ? 'w-1 h-8' : 'w-8 h-1'}
+                        bg-[#ac1ed6] rounded-full opacity-0 group-hover:opacity-100 transition-opacity
+                    `} />
+                </div>
+
                 {/* Console/Output Section */}
-                <div className={`
-                    bg-[#0d0d0d] flex flex-col shrink-0
-                    ${isFullScreen ? 'w-[40%] h-full border-l border-white/10' : 'h-[55%] w-full border-t border-white/10'}
-                `}>
+                <div 
+                    className="bg-[#0d0d0d] flex flex-col"
+                    style={{
+                        [isFullScreen ? 'width' : 'height']: `${100 - splitPercentage}%`
+                    }}
+                >
                     {/* Console Header */}
                     <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#1a1a1a] shrink-0">
                         <div className="flex items-center gap-2">
@@ -422,7 +607,17 @@ export function CodePlayground() {
 
                         {/* Output Section */}
                         <div className="flex-1 p-4 overflow-auto">
-                            <div className="text-xs text-white/40 mb-2 uppercase tracking-wider font-semibold">Output</div>
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="text-xs text-white/40 uppercase tracking-wider font-semibold">Output</div>
+                                {output?.executionTime && (
+                                    <div className="flex items-center gap-1.5 px-2 py-1 bg-[#ac1ed6]/10 border border-[#ac1ed6]/30 rounded-md">
+                                        <Clock className="w-3 h-3 text-[#ac1ed6]" />
+                                        <span className="text-xs text-[#ac1ed6] font-medium">
+                                            {output.executionTime}ms
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                             {output ? (
                                 <div className="font-mono text-sm whitespace-pre-wrap bg-[#1a1a1a] p-4 rounded-lg border border-white/10 min-h-[100px]">
                                     {output.stdout && <span className="text-white">{output.stdout}</span>}
@@ -520,7 +715,7 @@ export function CodePlayground() {
                                         options={{
                                             readOnly: true,
                                             minimap: { enabled: false },
-                                            fontSize: 12,
+                                            fontSize: 14,
                                             fontFamily: "'Fira Code', 'Monaco', 'Menlo', monospace",
                                         }}
                                     />
@@ -589,16 +784,6 @@ export function CodePlayground() {
             language={selectedLanguage}
             isOpen={showCodeAnalyzer}
             onClose={() => setShowCodeAnalyzer(false)}
-        />
-
-        {/* Playground Settings */}
-        <PlaygroundSettings
-            isOpen={showSettings}
-            onClose={() => setShowSettings(false)}
-            fontSize={fontSize}
-            theme={theme}
-            onFontSizeChange={handleFontSizeChange}
-            onThemeChange={handleThemeChange}
         />
     </>
   );
